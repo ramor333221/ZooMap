@@ -1,0 +1,96 @@
+/* ZooMap.css */
+
+.zoo-map-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.map-viewport {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* יחס 16:9 */
+    height: 0;
+    background-color: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* מצב עורך - משנה את העכבר לכל ה-viewport */
+.editor-active .map-viewport {
+    cursor: crosshair !important;
+}
+
+.map-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-image: url('../../../public/backgroundMap.jpeg'); /* וודא נתיב תקין */
+    background-size: 100% 100%;
+}
+
+.map-svg-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none; /* כבוי כברירת מחדל */
+}
+
+/* הפעלה בעריכה */
+.editor-active .map-svg-layer {
+    pointer-events: all !important;
+}
+
+.map-markers-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20; /* מעל הכל */
+    pointer-events: none;
+}
+
+/* עיצוב הקווים */
+polyline {
+    stroke-width: 0.8;
+    stroke: #FFD700;
+    stroke-dasharray: 2, 1;
+    fill: none;
+}
+
+/* סרגל כלים */
+.admin-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+}
+
+.admin-btn {
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    font-weight: bold;
+}
+
+.status-badge {
+    background: #fff3cd;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}

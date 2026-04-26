@@ -1,0 +1,50 @@
+.map-point-container {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* כשהעורך פעיל - מחביאים הכל חוץ מהנעץ */
+.map-point-container.editor-mode {
+  z-index: 5 !important;
+}
+
+.map-point-container.editor-mode .dest-tooltip {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.pin {
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+  transform: translate(-50%, -100%); /* השפיץ של הנעץ בנקודה */
+}
+
+.dest-tooltip {
+  position: absolute;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  z-index: 100;
+  pointer-events: none; /* הבועה לעולם לא חוסמת לחיצות */
+  overflow: hidden;
+}
+
+.dest-image {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+}
+
+.dest-content {
+  padding: 10px;
+  text-align: center;
+}
