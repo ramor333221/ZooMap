@@ -1,140 +1,206 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
+// import { routeService } from '../Api/routeService';
+
+// const RouteEditor = ({ destinations, onSaveSuccess }) => {
+//     const [isDrawing, setIsDrawing] = useState(false);
+//     const [points, setPoints] = useState([]);
+//     const [fromId, setFromId] = useState(null);
+
+//     useEffect(() => {
+//         console.log("Editor State:", { isDrawing, pointsCount: points.length, fromId });
+//     }, [isDrawing, points, fromId]);
+
+//     const handleCanvasClick = (e) => {
+//         if (!isDrawing) {
+//             console.log("Click ignored - start by clicking an animal first");
+//             return;
+//         }
+
+//         // חישוב מיקום מדויק בתוך ה-SVG (0-100)
+//         const svg = e.currentTarget.closest('svg');
+//         const rect = svg.getBoundingClientRect();
+//         const x = ((e.clientX - rect.left) / rect.width) * 100;
+//         const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+//         console.log("Canvas Point Added:", { x, y });
+//         setPoints(prev => [...prev, { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) }]);
+//     };
+
+//     const handleNodeClick = (e, dest) => {
+//         e.stopPropagation();
+//         e.preventDefault();
+
+//         const x = dest.location?.x ?? dest.x;
+//         const y = dest.location?.y ?? dest.y;
+
+//         if (!isDrawing) {
+//             console.log("Starting Route from:", dest.name);
+//             setIsDrawing(true);
+//             setFromId(dest.id);
+//             setPoints([{ x, y }]);
+//         } else {
+//             setIsDrawing(false);
+//             console.log("Ending Route at:", dest.name);
+//             saveRoute(dest.id,x, y);
+//         }
+//     };
+
+//     const saveRoute = async (toId,lastX, lastY) => {
+//         const finalPoints = [...points, { x: lastX, y: lastY }];
+//         try {
+//             await routeService.addRoute({
+//                 fromD: fromId,
+//                 toD: toId,
+//                 bodyPoints: finalPoints,
+//                 dist: 0
+//             });
+//             alert("המסלול נשמר בהצלחה!");
+//             onSaveSuccess();
+//         } catch (err) {
+//             console.error("Save Error:", err);
+//             alert("שגיאה בשמירה");
+//         }
+//         reset();
+//     };
+
+//     const reset = () => {
+//         setIsDrawing(false);
+//         setPoints([]);
+//         setFromId(null);
+//     };
+
+//     return (
+//         <g className="drawing-layer-group">
+//             {/* 1. שטח לכידה שקוף - חייב להיות ראשון בתוך ה-G */}
+//             <rect 
+//                 width="100" 
+//                 height="100" 
+//                 fill="rgba(0,0,0,0)" 
+//                 style={{ cursor: isDrawing ? 'crosshair' : 'pointer', pointerEvents: 'all' }}
+//                 onMouseDown={handleCanvasClick}
+//             />
+
+//             {/* 2. הקו המצויר בזמן אמת */}
+//             {isDrawing && points.length > 0 && (
+//                 <polyline
+//                     points={points.map(p => `${p.x},${p.y}`).join(' ')}
+//                     fill="none"
+//                     stroke="#FFD700"
+//                     strokeWidth="1.2"
+//                     strokeDasharray="2,1"
+//                     strokeLinecap="round"
+//                     style={{ pointerEvents: 'none' }}
+//                 />
+//             )}
+
+//             {/* 3. נקודות ציור (החרוזים על החוט) */}
+//             {isDrawing && points.map((p, i) => (
+//                 <circle 
+//                     key={`pt-${i}`} 
+//                     cx={p.x} 
+//                     cy={p.y} 
+//                     r="0.7" 
+//                     fill="red" 
+//                     style={{ pointerEvents: 'none' }} 
+//                 />
+//             ))}
+
+//             {/* 4. אזורי לחיצה על החיות (Hotspots) - חייבים להיות אחרונים כדי שיהיו מעל הכל */}
+//             {destinations.map(d => (
+//                 <circle 
+//                     key={`node-${d.id}`} 
+//                     cx={d.location?.x ?? d.x} 
+//                     cy={d.location?.y ?? d.y} 
+//                     r="3" // אזור לחיצה גדול ונוח
+//                     fill={fromId === d.id ? "rgba(76, 175, 80, 0.4)" : "rgba(255, 0, 0, 0.15)"} 
+//                     stroke={fromId === d.id ? "#4CAF50" : "none"}
+//                     strokeWidth="0.5"
+//                     style={{ cursor: 'pointer', pointerEvents: 'all' }}
+//                     onMouseDown={(e) => handleNodeClick(e, d)}
+//                 />
+//             ))}
+//         </g>
+//     );
+// };
+
+// export default RouteEditor;
+
+
+import React, { useState } from 'react';
 import { routeService } from '../Api/routeService';
-import { destinationService } from '../Api/destinationService';
 
-const RouteEditor = ({ onRouteSaved }) => {
-  const [destinations, setDestinations] = useState([]);
-  const [points, setPoints] = useState([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [fromD, setFromD] = useState(null);
+const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [points, setPoints] = useState([]);
+    const [fromId, setFromId] = useState(null);
 
-  // טעינת היעדים כדי להציג אותם על המפה
-  useEffect(() => {
-    destinationService.getAll().then(setDestinations).catch(console.error);
-  }, []);
+    const handleCanvasClick = (e) => {
+        if (!isDrawing || action !== 'create') return;
 
-  const handleDestinationClick = (dest, e) => {
-    e.stopPropagation(); // מונע מהלחיצה להפעיל את handleMapClick הכללי
+        const svg = e.currentTarget.closest('svg');
+        const rect = svg.getBoundingClientRect();
+        const x = parseFloat((((e.clientX - rect.left) / rect.width) * 100).toFixed(2));
+        const y = parseFloat((((e.clientY - rect.top) / rect.height) * 100).toFixed(2));
 
-    if (!isDrawing) {
-      // התחלת מסלול חדש מהיעד הזה
-      setIsDrawing(true);
-      setFromD(dest.id);
-      // הנקודה הראשונה במסלול היא המיקום של היעד
-      setPoints([{ x: dest.x, y: dest.y }]);
-    } else {
-      // סיום מסלול ביעד הזה
-      if (dest.id === fromD) {
-        alert("לא ניתן לסיים מסלול באותו יעד בו התחלת");
-        return;
-      }
-      
-      const finalPoints = [...points, { x: dest.x, y: dest.y }];
-      saveRoute(dest.id, finalPoints);
-    }
-  };
-
-  const handleMapClick = (e) => {
-    if (!isDrawing) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    setPoints(prev => [...prev, { x: parseFloat(x.toFixed(2)), y: parseFloat(y.toFixed(2)) }]);
-  };
-
-  const saveRoute = async (toDId, finalPoints) => {
-    const routeDTO = {
-      dist: 0, 
-      fromD: fromD, 
-      toD: toDId,
-      bodyPoints: finalPoints
+        setPoints(prev => [...prev, { x, y }]);
     };
 
-    try {
-      await routeService.addRoute(routeDTO);
-      alert(`המסלול בין ${fromD} ל-${toDId} נשמר!`);
-      resetEditor();
-      if (onRouteSaved) onRouteSaved();
-    } catch (err) {
-      alert("שגיאה בשמירה: " + err.message);
-    }
-  };
+    const handleNodeClick = (e, dest) => {
+        e.stopPropagation();
+        const x = dest.location?.x ?? dest.x;
+        const y = dest.location?.y ?? dest.y;
 
-  const resetEditor = () => {
-    setPoints([]);
-    setIsDrawing(false);
-    setFromD(null);
-  };
+        if (!isDrawing) {
+            setIsDrawing(true);
+            setFromId(dest.id);
+            setPoints([{ x, y }]);
+        } else {
+            if (dest.id === fromId) return reset();
+            saveRoute(dest.id, x, y);
+        }
+    };
 
-  return (
-    <div className="editor-container" style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '10px' }}>
-        <strong>סטטוס: </strong>
-        {!isDrawing ? "לחץ על נקודת יעד כדי להתחיל" : `מצייר מסלול מנקודה ${fromD}... לחץ על יעד אחר לסיום`}
-        {isDrawing && <button onClick={resetEditor} style={{ marginRight: '10px' }}>בטל</button>}
-      </div>
+    const saveRoute = async (toId, lastX, lastY) => {
+        const finalPoints = [...points, { x: lastX, y: lastY }];
+        try {
+            await routeService.addRoute({
+                fromD: fromId,
+                toD: toId,
+                bodyPoints: finalPoints,
+                dist: 0
+            });
+            alert("המסלול נשמר!");
+            onSaveSuccess();
+        } catch (err) { console.error(err); }
+        reset();
+    };
 
-      <div 
-        className="map-viewport" 
-        onClick={handleMapClick} 
-        style={{ 
-          position: 'relative', width: '100%', height: '500px', 
-          border: '2px solid #333', backgroundColor: '#eee', overflow: 'hidden'
-        }}
-      >
-        {/* שכבת הציור */}
-        <svg 
-          viewBox="0 0 100 100" preserveAspectRatio="none"
-          style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 10, pointerEvents: 'none' }}
-        >
-          {points.length > 1 && (
-            <polyline
-              points={points.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="none" stroke="yellow" strokeWidth="0.8" strokeDasharray="2,1"
-            />
-          )}
-          {points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="0.8" fill="red" />
-          ))}
-        </svg>
+    const reset = () => {
+        setIsDrawing(false);
+        setPoints([]);
+        setFromId(null);
+    };
 
-        {/* שכבת היעדים (Destinations) */}
-        {destinations.map(dest => (
-          <div
-            key={dest.id}
-            onClick={(e) => handleDestinationClick(dest, e)}
-            style={{
-              position: 'absolute',
-              left: `${dest.x}%`,
-              top: `${dest.y}%`,
-              width: '20px',
-              height: '20px',
-              backgroundColor: fromD === dest.id ? '#4CAF50' : '#2196F3',
-              borderRadius: '50%',
-              transform: 'translate(-50%, -50%)',
-              cursor: 'pointer',
-              zIndex: 20,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '10px',
-              border: '2px solid white',
-              boxShadow: '0 0 5px rgba(0,0,0,0.3)'
-            }}
-          >
-            {dest.id}
-          </div>
-        ))}
-
-        <div className="map-background" style={{ zIndex: 1, width: '100%', height: '100%' }}>
-            {/* תמונת המפה כאן */}
-        </div>
-      </div>
-    </div>
-  );
+    return (
+        <g>
+            <rect width="100" height="100" fill="transparent" onMouseDown={handleCanvasClick} />
+            {isDrawing && (
+                <polyline 
+                    points={points.map(p => `${p.x},${p.y}`).join(' ')} 
+                    fill="none" stroke="#FFD700" strokeWidth="1" strokeDasharray="2,1" 
+                />
+            )}
+            {destinations.map(d => (
+                <circle 
+                    key={d.id} cx={d.location?.x ?? d.x} cy={d.location?.y ?? d.y} r="3" 
+                    fill={fromId === d.id ? "green" : "rgba(255,0,0,0.2)"}
+                    onMouseDown={(e) => handleNodeClick(e, d)}
+                    style={{ cursor: 'pointer' }}
+                />
+            ))}
+        </g>
+    );
 };
 
 export default RouteEditor;
+

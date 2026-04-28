@@ -1,10 +1,10 @@
-/* ZooMap.css */
-
+/* --- 1. מכולת המפה הראשית --- */
 .zoo-map-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     position: relative;
+    font-family: sans-serif;
 }
 
 .map-viewport {
@@ -18,56 +18,42 @@
     overflow: hidden;
 }
 
-/* מצב עורך - משנה את העכבר לכל ה-viewport */
+/* שינוי סמן עכבר במצב עריכה */
 .editor-active .map-viewport {
     cursor: crosshair !important;
 }
 
+/* --- 2. שכבות המפה (Z-Index Management) --- */
 .map-background {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    background-image: url('../../../public/backgroundMap.jpeg'); /* וודא נתיב תקין */
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: url('../../../public/backgroundMap.jpeg');
     background-size: 100% 100%;
+    z-index: 1;
 }
 
 .map-svg-layer {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     z-index: 10;
-    pointer-events: none; /* כבוי כברירת מחדל */
+    pointer-events: none; /* כבוי כברירת מחדל כדי לא לחסום מרקרים */
 }
 
-/* הפעלה בעריכה */
 .editor-active .map-svg-layer {
-    pointer-events: all !important;
+    pointer-events: all !important; /* מאפשר לחיצה על ה-SVG בעריכה */
 }
 
 .map-markers-layer {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 20; /* מעל הכל */
-    pointer-events: none;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 20;
+    pointer-events: none; /* מאפשר לחיצות לעבור דרך השכבה אלא אם יש אלמנט ספציפי */
 }
 
-/* עיצוב הקווים */
-polyline {
-    stroke-width: 0.8;
-    stroke: #FFD700;
-    stroke-dasharray: 2, 1;
-    fill: none;
-}
-
-/* סרגל כלים */
+/* --- 3. סרגל ניהול עליון (Admin Toolbar) --- */
 .admin-toolbar {
     display: flex;
     align-items: center;
@@ -77,6 +63,7 @@ polyline {
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     margin-bottom: 10px;
+    direction: rtl;
 }
 
 .admin-btn {
@@ -86,11 +73,263 @@ polyline {
     border-radius: 5px;
     border: none;
     font-weight: bold;
+    transition: opacity 0.2s;
+}
+
+.admin-btn:hover {
+    opacity: 0.9;
 }
 
 .status-badge {
     background: #fff3cd;
+    color: #856404;
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.9rem;
+    border: 1px solid #ffeeba;
+}
+
+/* --- 4. סרגל עריכה פנימי (בתוך ה-SVG/Manager) --- */
+.editor-internal-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    direction: rtl;
+    backdrop-filter: blur(4px);
+    user-select: none;
+}
+
+.control-group {
+    display: flex;
+    gap: 6px;
+    background: #f0f0f0;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.editor-internal-controls button {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: #555;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.editor-internal-controls button:hover {
+    background: rgba(255, 255, 255, 0.8);
+    color: #000;
+}
+
+/* כפתור פעיל (מצב נוכחי) */
+.editor-internal-controls button.active {
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* צבעים שונים למצבים פעילים */
+.control-group:first-child button.active {
+    color: #2196F3; /* כחול למצב (מסלול/נקודה) */
+}
+
+.control-group:last-child button.active {
+    color: #2e7d32; /* ירוק להוספה */
+}
+
+.control-group:last-child button[onClick*="update"].active {
+    color: #d32f2f; /* אדום לעריכה */
+}
+
+/* --- 5. אלמנטים גרפיים של ה-SVG --- */
+polyline {
+    stroke-width: 1.2;
+    stroke: #FFD700;
+    stroke-dasharray: 2, 1;
+    fill: none;
+    pointer-events: none;
+}
+
+circle {
+    transition: r 0.2s, fill 0.2s;
+}
+
+/* --- 6. רספונסיביות --- */
+@media (max-width: 600px) {
+    .editor-internal-controls {
+        padding: 5px;
+    }
+    .editor-internal-controls button {
+        padding: 4px 6px;
+        font-size: 9px;
+    }
+    .admin-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* הופך את הקונטיינר של המפה לבסיס למיקום הסרגל */
+.map-viewport {
+    position: relative;
+}
+
+/* סרגל כלים קומפקטי וצף */
+.compact-editor-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100; /* מעל הכל */
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    padding: 4px 8px;
+    border-radius: 50px; /* צורת קפסולה */
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    gap: 8px;
+}
+
+.toolbar-section {
+    display: flex;
+    gap: 4px;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: #ddd;
+}
+
+/* כפתורי האייקונים */
+.compact-editor-toolbar button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.compact-editor-toolbar button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* מצב פעיל - כחול עדין */
+.compact-editor-toolbar button.active {
+    background: #e3f2fd;
+    color: #1976d2;
+    box-shadow: inset 0 0 0 1px #1976d2;
+}
+
+/* התאמה למצב עריכה - צבע שונה למטרת זיהוי מהיר */
+.compact-editor-toolbar button[onClick*="update"].active {
+    background: #fff3e0;
+    color: #ef6c00;
+    box-shadow: inset 0 0 0 1px #ef6c00;
+}
+
+/* סרגל כלים קומפקטי וצף במרכז למעלה */
+.compact-editor-toolbar {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%); /* מרכוז מדויק */
+    z-index: 1000; /* מוודא שהוא מעל ה-SVG והמרקרים */
+    
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    background: rgba(255, 255, 255, 0.85); /* שקיפות עדינה */
+    backdrop-filter: blur(10px); /* אפקט טשטוש מודרני */
+    padding: 6px 12px;
+    border-radius: 50px; /* צורת קפסולה */
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    
+    direction: ltr; /* שומר על סדר האייקונים משמאל לימין */
+}
+
+/* קבוצות כפתורים בתוך הסרגל */
+.toolbar-section {
+    display: flex;
+    gap: 6px;
+}
+
+/* קו מפריד דק בין המצבים לפעולות */
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* עיצוב הכפתורים (אייקונים) */
+.compact-editor-toolbar button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    border: none;
+    background: transparent;
+    border-radius: 50%; /* כפתורים עגולים */
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+/* אפקט ריחוף */
+.compact-editor-toolbar button:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
+}
+
+/* מצב פעיל (נבחר) */
+.compact-editor-toolbar button.active {
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: scale(1.1);
+}
+
+/* צבע אינדיקציה למוד (כחול) */
+.toolbar-section:first-child button.active {
+    filter: drop-shadow(0 0 2px rgba(33, 150, 243, 0.5));
+    border: 1.5px solid #2196F3;
+}
+
+/* צבע אינדיקציה לפעולה (ירוק להוספה, כתום לעריכה) */
+.toolbar-section:last-child button.active {
+    border: 1.5px solid #4CAF50; /* ירוק כברירת מחדל */
+}
+
+/* אם הכפתור השני בקבוצה השנייה (עריכה) פעיל - נצבע בכתום */
+.toolbar-section:last-child button:last-child.active {
+    border-color: #FF9800;
+}
+
+/* מניעת בחירת טקסט/אייקונים */
+.compact-editor-toolbar {
+    user-select: none;
 }

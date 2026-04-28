@@ -9,7 +9,7 @@ export const authService = {
    * @param {string} username 
    * @param {string} password 
    */
-  login: async (username, password) => {
+  login: async ({ username, password }) => { 
     try {
       const data = await apiClient('/v1/admin/login', {
         method: 'POST',

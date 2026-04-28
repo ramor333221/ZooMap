@@ -3,7 +3,8 @@ import { routeService } from '../Api/routeService';
 import { destinationService } from '../Api/destinationService';
 import RoutePath from './RoutePath';
 import DestinationPoint from './DestinationPoint';
-import RouteDrawingLayer from './RouteDrawingLayer';
+import MapEditorManager from './MapEditorManager';
+import EditorToolbar from './EditorToolbar'; // הקומפוננטה החדשה
 import '../Css/ZooMap.css';
 
 const ZooMap = () => {
@@ -13,6 +14,10 @@ const ZooMap = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isEditorActive, setIsEditorActive] = useState(false);
 
+    // ניהול הסטייט של העורך ברמת המפה
+    const [editorMode, setEditorMode] = useState('route'); 
+    const [editorAction, setEditorAction] = useState('create');
+
     const fetchMapData = async () => {
         try {
             const [rData, dData] = await Promise.all([
@@ -21,12 +26,15 @@ const ZooMap = () => {
             ]);
             setRoutes(rData);
             setDestinations(dData);
-        } catch (err) { console.error(err); }
-        finally { setLoading(false); }
+        } catch (err) { 
+            console.error("Fetch error:", err); 
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
@@ -40,6 +48,8 @@ const ZooMap = () => {
 
     return (
         <div className={`zoo-map-container ${isEditorActive ? 'editor-active' : ''}`}>
+            
+            {/* כפתור כניסה למצב עריכה - מחוץ למפה */}
             {isAdmin && (
                 <div className="admin-toolbar">
                     <button 
@@ -47,32 +57,42 @@ const ZooMap = () => {
                         onClick={() => setIsEditorActive(!isEditorActive)}
                         style={{ backgroundColor: isEditorActive ? '#ff4d4d' : '#4CAF50' }}
                     >
-                        {isEditorActive ? "סגור עורך" : "מצב עורך (הוספת מסלול)"}
+                        {isEditorActive ? "סגור עורך" : "מצב עורך (ניהול מפה)"}
                     </button>
-                    {isEditorActive && <span className="status-badge">📍 מצב עריכה פעיל: לחץ על חיה להתחלה</span>}
                 </div>
             )}
-    
+
             <div className="map-viewport">
-                {/* רקע המפה */}
                 <div className="map-background"></div>
 
-                {/* שכבת ה-SVG - עכשיו מקבלת אירועי עכבר בצורה מלאה */}
+                {/* הקומפוננטה הנפרדת של הסרגל - HTML */}
+                {isAdmin && isEditorActive && (
+                    <EditorToolbar 
+                        mode={editorMode} 
+                        setMode={setEditorMode} 
+                        action={editorAction} 
+                        setAction={setEditorAction} 
+                    />
+                )}
+
+                {/* שכבת הגרפיקה - SVG */}
                 <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
                     {routes.map(route => <RoutePath key={route.id} route={route} />)}
                     
                     {isAdmin && isEditorActive && (
-                        <RouteDrawingLayer 
+                        <MapEditorManager 
+                            mode={editorMode}
+                            action={editorAction}
+                            destinations={destinations}
                             onSaveSuccess={() => {
                                 fetchMapData();
                                 setIsEditorActive(false);
                             }} 
-                            destinations={destinations} 
                         />
                     )}
                 </svg>
     
-                {/* שכבת המרקרים - מעבירים את isEditorActive */}
+                {/* שכבת המרקרים - HTML */}
                 <div className="map-markers-layer">
                     {destinations.map(dest => (
                         <DestinationPoint 
