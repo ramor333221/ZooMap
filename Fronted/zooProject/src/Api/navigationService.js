@@ -21,7 +21,7 @@ export const navigationService = {
       queryParams = `?${params.toString()}`;
     }
 
-    return apiClient(`/v1/public/route${queryParams}`, {
+    return apiClient(`/v1/public/bestRoute${queryParams}`, {
       method: 'POST',
       body: JSON.stringify(selectedIds), // שולח את רשימת ה-IDs כפי שהשרת מצפה
     });

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 
-const DestinationPoint = ({ destination, isEditorActive }) => {
+// הוספנו כאן את isSelected ו-onClick לרשימת ה-Props
+const DestinationPoint = ({ destination, isEditorActive, isSelected, onClick }) => {
   const [showInfo, setShowInfo] = useState(false);
 
-  // חילוץ המיקום (תמיכה בשני המבנים האפשריים)
+  // חילוץ המיקום
   const posX = destination.location?.x ?? destination.x;
   const posY = destination.location?.y ?? destination.y;
 
@@ -11,23 +12,35 @@ const DestinationPoint = ({ destination, isEditorActive }) => {
     left: `${posX}%`,
     top: `${posY}%`,
     position: 'absolute',
-    // במצב עורך: המיכל עצמו "שקוף" ללחיצות (מעביר אותן ל-SVG שמתחת)
-    // במצב רגיל: הוא לחיץ כדי להראות Tooltip
     pointerEvents: isEditorActive ? 'none' : 'auto',
-    zIndex: isEditorActive ? 5 : 20,
+    zIndex: isEditorActive ? 5 : 30, // העלינו את ה-Z-Index כדי שיהיה מעל הכל
+    transition: 'all 0.3s ease', // אנימציה חלקה למעבר
   };
 
   return (
     <div 
-      className={`map-point-container ${isEditorActive ? 'editor-mode' : ''}`} 
+      // הוספת מחלקה 'selected' אם היעד נבחר
+      className={`map-point-container ${isEditorActive ? 'editor-mode' : ''} ${isSelected ? 'selected' : ''}`} 
       style={pointStyle}
       onMouseEnter={() => !isEditorActive && setShowInfo(true)}
       onMouseLeave={() => setShowInfo(false)}
+      // הפעלת פונקציית הבחירה בלחיצה
+      onClick={onClick}
     >
-      {/* הנעץ עצמו - חייב להישאר לחיץ תמיד כדי להתחיל/לסיים מסלול */}
-      <div className="pin" style={{ pointerEvents: 'auto' }}>📍</div>
+      {/* הנעץ עצמו - משנה צבע או גודל אם הוא נבחר */}
+      <div 
+        className="pin" 
+        style={{ 
+            pointerEvents: 'auto',
+            transform: isSelected ? 'scale(1.5)' : 'scale(1)',
+            filter: isSelected ? 'drop-shadow(0 0 8px #007AFF)' : 'none',
+            fontSize: isSelected ? '1.5rem' : '1.2rem'
+        }}
+      >
+        {isSelected ? '📍' : '📌'} 
+      </div>
 
-      {/* הבועה מוצגת רק אם אנחנו לא בעורך */}
+      {/* בועת המידע */}
       {showInfo && !isEditorActive && (
         <div className="dest-tooltip">
           <div className="dest-image-container">

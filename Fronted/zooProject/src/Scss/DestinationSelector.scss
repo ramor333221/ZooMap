@@ -1,0 +1,80 @@
+$primary-blue: #007AFF;
+$border-color: #e0e0e0;
+
+.destination-selector-sidebar {
+  width: 320px;
+  background: white;
+  border-left: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+
+  h2 {
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    color: #333;
+    text-align: right;
+  }
+
+  .search-box {
+    margin-bottom: 20px;
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      outline: none;
+      text-align: right;
+      &:focus { border-color: $primary-blue; }
+    }
+  }
+
+  .destinations-list {
+    flex: 1;
+    overflow-y: auto;
+    direction: rtl; // גלילה בצד ימין
+    
+    .destination-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #f8f9fa;
+      }
+
+      &.active {
+        background: #e3f2fd;
+        border-right: 4px solid $primary-blue; // הדגשה בצד ימין
+      }
+
+      input[type="checkbox"] {
+        margin-left: 12px;
+        transform: scale(1.2);
+      }
+    }
+  }
+
+  .calculate-btn {
+    margin-top: 20px;
+    padding: 15px;
+    background: $primary-blue;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  }
+}
