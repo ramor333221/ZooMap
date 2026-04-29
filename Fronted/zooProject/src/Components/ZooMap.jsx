@@ -4,8 +4,7 @@ import { destinationService } from '../Api/destinationService';
 import RoutePath from './RoutePath';
 import DestinationPoint from './DestinationPoint';
 import MapEditorManager from './MapEditorManager';
-import EditorToolbar from './EditorToolbar'; // הקומפוננטה החדשה
-import '../Css/ZooMap.css';
+import '../Scss/main.scss';
 
 const ZooMap = () => {
     const [routes, setRoutes] = useState([]);
@@ -13,10 +12,6 @@ const ZooMap = () => {
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isEditorActive, setIsEditorActive] = useState(false);
-
-    // ניהול הסטייט של העורך ברמת המפה
-    const [editorMode, setEditorMode] = useState('route'); 
-    const [editorAction, setEditorAction] = useState('create');
 
     const fetchMapData = async () => {
         try {
@@ -47,60 +42,56 @@ const ZooMap = () => {
     if (loading) return <div className="map-loader">טוען...</div>;
 
     return (
-        <div className={`zoo-map-container ${isEditorActive ? 'editor-active' : ''}`}>
-            
-            {/* כפתור כניסה למצב עריכה - מחוץ למפה */}
-            {isAdmin && (
-                <div className="admin-toolbar">
-                    <button 
-                        className="admin-btn"
-                        onClick={() => setIsEditorActive(!isEditorActive)}
-                        style={{ backgroundColor: isEditorActive ? '#ff4d4d' : '#4CAF50' }}
-                    >
-                        {isEditorActive ? "סגור עורך" : "מצב עורך (ניהול מפה)"}
-                    </button>
-                </div>
-            )}
-
-            <div className="map-viewport">
-                <div className="map-background"></div>
-
-                {/* הקומפוננטה הנפרדת של הסרגל - HTML */}
-                {isAdmin && isEditorActive && (
-                    <EditorToolbar 
-                        mode={editorMode} 
-                        setMode={setEditorMode} 
-                        action={editorAction} 
-                        setAction={setEditorAction} 
-                    />
+        <div className="zoo-dashboard">
+            <div className="map-main-content">
+                
+                {/* --- Admin Toggle Bar --- */}
+                {isAdmin && (
+                    <div className="admin-toolbar">
+                        <span className="status-badge">
+                            {isEditorActive ? "מצב עריכה" : "תצוגת מבקר"}
+                        </span>
+                        <button 
+                            className={`admin-btn ${isEditorActive ? 'active' : ''}`}
+                            onClick={() => setIsEditorActive(!isEditorActive)}
+                        >
+                            {isEditorActive ? "יציאה מעריכה" : "ניהול מפה"}
+                        </button>
+                    </div>
                 )}
 
-                {/* שכבת הגרפיקה - SVG */}
-                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    {routes.map(route => <RoutePath key={route.id} route={route} />)}
-                    
-                    {isAdmin && isEditorActive && (
-                        <MapEditorManager 
-                            mode={editorMode}
-                            action={editorAction}
-                            destinations={destinations}
-                            onSaveSuccess={() => {
-                                fetchMapData();
-                                setIsEditorActive(false);
-                            }} 
-                        />
-                    )}
-                </svg>
-    
-                {/* שכבת המרקרים - HTML */}
-                <div className="map-markers-layer">
-                    {destinations.map(dest => (
-                        <DestinationPoint 
-                            key={dest.id} 
-                            destination={dest} 
-                            isEditorActive={isEditorActive}
-                        />
-                    ))}
+                <div className={`zoo-map-container ${isEditorActive ? 'editor-active' : ''}`}>
+                    <div className="map-viewport">
+                        {/* 1. שכבת רקע (תמונה/צבע) */}
+                        <div className="map-background"></div>
+
+                        {/* 2. שכבת ה-SVG (מסלולים ועורך) */}
+                        <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            {/* תצוגת מבקר: מסלולים */}
+                            {routes.map(route => (
+                                <RoutePath key={route.id} route={route} />
+                            ))}
+                            
+                            {/* ניהול מפה: טוען את המנהל רק אם העורך פעיל */}
+                            {isAdmin && isEditorActive && (
+                                <MapEditorManager 
+                                    destinations={destinations}
+                                    onSaveSuccess={fetchMapData} 
+                                />
+                            )}
+                        </svg>
+
+                        {/* 3. שכבת המרקרים (HTML/Divs) */}
+                        <div className="map-markers-layer">
+                            {destinations.map(dest => (
+                                <DestinationPoint 
+                                    key={dest.id} 
+                                    destination={dest} 
+                                    isEditorActive={isEditorActive}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

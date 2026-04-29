@@ -1,0 +1,67 @@
+@import 'variables';
+
+.map-point-container {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Pin Styling
+  .pin {
+    font-size: 24px;
+    cursor: pointer;
+    user-select: none;
+    transform: translate(-50%, -100%); // Tip of the pin sits exactly on the coordinate
+    transition: transform $transition-fast;
+
+    &:hover {
+      transform: translate(-50%, -105%) scale(1.1);
+    }
+  }
+
+  // Tooltip Styling
+  .dest-tooltip {
+    position: absolute;
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: $shadow-soft;
+    z-index: 100;
+    pointer-events: none; // Tooltip won't block clicks to the map
+    overflow: hidden;
+    
+    .dest-image {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+    }
+
+    .dest-content {
+      padding: 10px;
+      text-align: center;
+      
+      h4 { margin: 0 0 5px 0; color: #333; }
+      p { margin: 0; font-size: 0.85rem; color: #666; }
+    }
+  }
+
+  // Editor Mode Specifics
+  &.editor-mode {
+    z-index: 5 !important;
+
+    // Hide tooltip entirely when editing to focus on point placement
+    .dest-tooltip {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    
+    .pin {
+      filter: drop-shadow(0 0 5px rgba($editor-orange, 0.5));
+    }
+  }
+}

@@ -1,0 +1,52 @@
+.side-editor-panel {
+    position: fixed;
+    top: 80px;      // Gap from top
+    right: 20px;    // Puts it on the side
+    width: 300px;   // Small and normal width
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 9999;  // Above everything
+    direction: rtl;
+    font-family: sans-serif;
+
+    h3 { margin-top: 0; color: #333; font-size: 1.2rem; }
+
+    .side-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .coord-box {
+            background: #f0f4f8;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-radius: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            button {
+                flex: 1;
+                padding: 10px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+            .save-btn { background: #4CAF50; color: white; }
+            .cancel-btn { background: #eee; color: #666; }
+        }
+    }
+}

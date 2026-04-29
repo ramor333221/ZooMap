@@ -3,6 +3,7 @@ package com.example.zoo.Service;
 import com.example.zoo.DTO.DestinationDTO;
 import com.example.zoo.Entities.CategoryType;
 import com.example.zoo.Entities.Destination;
+import com.example.zoo.Entities.Point;
 import com.example.zoo.Repositories.DestinationRepo;
 import org.springframework.context.annotation.Lazy; // הוספת הייבוא
 import org.springframework.transaction.annotation.Transactional;
@@ -44,13 +45,14 @@ public class DestinationService {
                 .picUrl(dto.getPicUrl())
                 .description(dto.getDescription())
                 .category(findCategory(dto.getCategory()))
+                // כאן אנחנו יוצרים את אובייקט ה-Point מה-x וה-y של ה-DTO
+                .location(new Point(dto.getX(), dto.getY()))
                 .build();
 
         Destination saved = destinationRepo.save(destination);
         navigationService.refresh();
         return saved;
     }
-
     @Transactional
     public Destination update(int id, DestinationDTO dto) {
         Destination existing = getById(id);

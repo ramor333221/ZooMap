@@ -1,0 +1,56 @@
+@import 'variables';
+
+.zoo-dashboard {
+  display: flex;
+  width: 100%;
+  height: 90vh; // Or desired height
+  gap: 20px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  direction: rtl; // For Hebrew interface
+
+  .editor-side-panel {
+    flex: 0 0 300px; // Fixed width for the form
+    background: white;
+    border-radius: 12px;
+    box-shadow: $shadow-soft;
+    padding: 20px;
+    height: fit-content;
+    animation: slideInRight 0.3s ease;
+
+    h3 { margin-bottom: 20px; color: $primary-blue; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    
+    .side-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+
+      input, select, textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: inherit;
+      }
+
+      .side-form-coords {
+        font-size: 12px;
+        color: #999;
+        background: #f9f9f9;
+        padding: 5px;
+        text-align: center;
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .map-main-content {
+    flex: 1; // Map takes all remaining space
+    min-width: 0; // Prevents map from breaking flexbox
+  }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
