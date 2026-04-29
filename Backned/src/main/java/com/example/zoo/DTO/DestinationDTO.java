@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,5 +16,6 @@ public class DestinationDTO {
     private String picUrl;
     private String description;
     private String category;
-    private Point location;
+    private double x;
+    private double y;
 }

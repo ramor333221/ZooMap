@@ -1,0 +1,49 @@
+@import 'variables';
+
+.admin-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    box-shadow: $shadow-soft;
+    direction: rtl;
+
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .status-badge {
+        font-size: 13px;
+        font-weight: 600;
+        color: #666;
+        background: #f0f0f0;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    .admin-btn {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all $transition-fast;
+        background-color: $admin-green;
+        color: white;
+
+        &:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        &.active {
+            background-color: $danger-red;
+            box-shadow: 0 4px 10px rgba($danger-red, 0.3);
+        }
+    }
+}

@@ -1,0 +1,28 @@
+@import 'variables';
+
+// This is the backdrop
+.form-fixed-overlay {
+  position: fixed;
+  inset: 0; // Modern way to say top:0, left:0, right:0, bottom:0
+  background: rgba(0, 0, 0, 0.4); // Make sure this isn't too dark/gray
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  pointer-events: all; // Crucial to catch clicks
+}
+
+.editor-form-container {
+  // Reset any SVG-inherited properties
+  pointer-events: auto; 
+  
+  form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    width: 350px;
+    position: relative; // Ensures it stays above the overlay
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* ... existing styles ... */
+  }
+}

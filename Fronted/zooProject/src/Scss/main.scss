@@ -1,0 +1,108 @@
+// Base Reset (Optional)
+* { box-sizing: border-box; }
+
+// Modules
+@import 'variables';
+@import 'map-layout';
+@import 'admin-tools';
+@import 'form';
+@import 'destination-point';
+
+// main.scss
+
+.zoo-dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative; // Needed for fixed children
+}
+
+.map-viewport {
+    position: relative;
+    flex: 1;
+    background: #fff;
+    overflow: hidden;
+    // This ensures the container actually exists in space
+    min-height: 500px; 
+}
+
+.map-svg-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    // CRITICAL: Let clicks pass through the SVG to the buttons below if needed,
+    // but we will enable clicks on the specific 'rect' inside it.
+    pointer-events: none; 
+
+    .destination-editor-group rect {
+        // This makes ONLY the editor background clickable
+        pointer-events: all; 
+    }
+}
+
+.compact-editor-toolbar {
+    position: fixed; // או absolute אם ה-viewport הוא relative
+    top: 80px; // מתחת ל-admin toolbar
+    left: 20px;
+    z-index: 10001; // הכי גבוה שיש
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    pointer-events: all; // קריטי! מאפשר לחיצה בתוך ה-SVG
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.map-svg-layer {
+    // בזמן עריכה, וודאי שה-SVG מאפשר מעבר קליקים לאלמנטים בתוכו
+    &.editor-active {
+        pointer-events: visiblePainted; 
+    }
+}
+
+.side-editor-panel {
+    position: fixed;     // משתמשים ב-fixed כי זה יוצא ל-body
+    top: 50%;           // ממורכז אנכית
+    left: 50%;          // ממורכז אופקית
+    transform: translate(-50%, -50%); // ממרכז בדיוק
+    z-index: 99999;     // הכי גבוה שיש
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    min-width: 300px;
+    color: #333;        // וודא שהטקסט לא לבן על לבן
+}
+
+.side-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    input, select, textarea {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+}
+
+.map-markers-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; // חשוב: המכולה עצמה לא חוסמת
+    z-index: 5;
+}
+
+.map-svg-layer {
+    z-index: 10; // ה-SVG (שבו נמצא ה-Editor) חייב להיות מעל המרקרים
+}

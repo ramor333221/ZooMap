@@ -8,6 +8,10 @@ bin/
 *.war
 *.ear
 .mvn/wrapper/maven-wrapper.jar
+*.db
+*.mv.db
+*.trace.db
+Backned/data/
 
 # --- React / Node.js ---
 node_modules/
