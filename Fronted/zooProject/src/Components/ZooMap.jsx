@@ -5,8 +5,7 @@ import { navigationService } from '../Api/navigationService';
 import RoutePath from './RoutePath';
 import DestinationPoint from './DestinationPoint';
 import DestinationSelector from './DestinationSelector';
-import RouteDrawingLayer from './RouteDrawingLayer';
-import MapEditorManager from './MapEditorManager'; // המנהל שהיה אצל השותפה
+import MapEditorManager from './MapEditorManager'; 
 import '../Scss/ZooMap.scss';
 
 const ZooMap = () => {

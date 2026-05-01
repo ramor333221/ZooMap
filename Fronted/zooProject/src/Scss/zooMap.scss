@@ -17,13 +17,27 @@ $bg-light: #f0f2f5;
     position: relative;
     display: flex;
     flex-direction: column;
+    height: 100%; // Ensures it fills the layout exactly
+    overflow: hidden; // Prevents anything from leaking out
+
+    // The toolbar area above the map
+    .map-controls {
+      padding: 10px;
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      z-index: 35;
+      display: flex;
+      gap: 10px;
+    }
 
     // המפה עצמה
     .map-viewport {
-      flex: 1;
+      flex: 1; // Takes up remaining available space dynamically
       position: relative;
       background-color: #f0f0f0;
       border: 2px solid #ddd;
+      margin: 10px; // Adds a bit of margin so it looks contained
+      border-radius: 8px; // Gives it a clean design
       overflow: hidden;
       cursor: default;
 
@@ -35,7 +49,7 @@ $bg-light: #f0f2f5;
         width: 100%;
         height: 100%;
         z-index: 1;
-        background-image: url('../../../public/backgroundMap.jpeg'); // וודאי שהנתיב נכון
+        background-image: url('../../../public/backgroundMap.jpeg'); 
         background-size: 100% 100%;
         background-repeat: no-repeat;
       }
@@ -84,12 +98,14 @@ $bg-light: #f0f2f5;
 
 // עיצובים נוספים (הוראות הגעה וכו')
 .navigation-panel {
-  margin-top: auto; // דוחף לתחתית
+  // Instead of pushing to bottom, limit its size and make it scroll if needed
   background: white;
   padding: 15px;
   border-right: 4px solid $primary-blue;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   z-index: 30;
+  max-height: 35%; // Prevents the panel from eating up too much map space
+  overflow-y: auto; 
 
   .steps-container {
     display: flex;
