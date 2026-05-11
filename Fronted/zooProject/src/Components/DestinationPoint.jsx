@@ -1,54 +1,55 @@
 import React, { useState } from 'react';
+import '../Scss/DestinationPoint.scss'; 
 
-// הוספנו כאן את isSelected ו-onClick לרשימת ה-Props
 const DestinationPoint = ({ destination, isEditorActive, isSelected, onClick }) => {
   const [showInfo, setShowInfo] = useState(false);
 
-  // חילוץ המיקום
+  // חילוץ קואורדינטות
   const posX = destination.location?.x ?? destination.x;
   const posY = destination.location?.y ?? destination.y;
+
+  // בניית נתיב התמונה מתיקיית public
+  // אם destination.picUrl הוא למשל "images/park.jpg", זה יחפש ב-public/images/park.jpg
+  //const imageSrc = `${process.env.PUBLIC_URL}/${destination.picUrl}`;
+  const imageSrc = `/${destination.picUrl}`;
 
   const pointStyle = {
     left: `${posX}%`,
     top: `${posY}%`,
     position: 'absolute',
     pointerEvents: isEditorActive ? 'none' : 'auto',
-    zIndex: isEditorActive ? 5 : 30, // העלינו את ה-Z-Index כדי שיהיה מעל הכל
-    transition: 'all 0.3s ease', // אנימציה חלקה למעבר
+    zIndex: isSelected ? 100 : 30,
+    transition: 'all 0.4s ease',
   };
 
   return (
     <div 
-      // הוספת מחלקה 'selected' אם היעד נבחר
-      className={`map-point-container ${isEditorActive ? 'editor-mode' : ''} ${isSelected ? 'selected' : ''}`} 
+      className={`map-point-container ${isSelected ? 'selected' : ''}`} 
       style={pointStyle}
       onMouseEnter={() => !isEditorActive && setShowInfo(true)}
       onMouseLeave={() => setShowInfo(false)}
-      // הפעלת פונקציית הבחירה בלחיצה
       onClick={onClick}
     >
-      {/* הנעץ עצמו - משנה צבע או גודל אם הוא נבחר */}
-      <div 
-        className="pin" 
-        style={{ 
-            pointerEvents: 'auto',
-            transform: isSelected ? 'scale(1.5)' : 'scale(1)',
-            filter: isSelected ? 'drop-shadow(0 0 8px #007AFF)' : 'none',
-            fontSize: isSelected ? '1.5rem' : '1.2rem'
-        }}
-      >
-        {isSelected ? '📍' : '📌'} 
+      <div className="pin-wrapper">
+        <div className="pin-image-frame">
+           <img src={imageSrc} alt="" className="pin-destination-img" />
+        </div>
+        <span className={`radar-pulse ${isSelected ? 'active-pulse' : ''}`}></span>
       </div>
 
-      {/* בועת המידע */}
       {showInfo && !isEditorActive && (
-        <div className="dest-tooltip">
-          <div className="dest-image-container">
-            <img src={destination.picUrl} alt={destination.name} className="dest-image" />
+        <div className="dest-tooltip-professional">
+          <div className="tooltip-header">
+            <img src={imageSrc} alt="" className="header-thumb" />
+            <div className="header-text">
+              <h3 className="dest-title">{destination.name}</h3>
+              <span className="dest-category">{destination.category || "מיקום"}</span>
+            </div>
           </div>
-          <div className="dest-content">
-            <h3 className="dest-title">{destination.name}</h3>
-            <p className="dest-description">{destination.description}</p>
+          <div className="dest-body">
+            <p className="dest-description">
+              {destination.description}
+            </p>
           </div>
         </div>
       )}

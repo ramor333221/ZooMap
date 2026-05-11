@@ -1,0 +1,498 @@
+// App.scss
+// ==========================================================================
+// MASTER SINGLE-SCREEN VIEWPORT CONTROLLER (3-Column Layout)
+// ==========================================================================
+@import './variables';
+@import './animations';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; // Kills window scrollbars completely
+  background: #030712;
+  font-family: 'Inter', sans-serif;
+  color: $text-primary;
+}
+
+// Master grid system mapping Left Sidebar, Center Canvas, Right AI
+.zoo-app-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr 320px;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 280px 1fr 280px; // Responsive squeezing for smaller screens
+  }
+}
+
+// ==========================================
+// COLUMN 1: LEFT NAVIGATION SIDEBAR
+// ==========================================
+.app-sidebar {
+  background: rgba(11, 17, 32, 0.95);
+  border-right: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  overflow: hidden;
+
+  .sidebar-scrollable-container {
+    flex-grow: 1;
+    overflow-y: auto; // Enables independent list scrolling
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+  }
+
+  .brand-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .brand-logo {
+      font-size: 1.8rem;
+    }
+
+    .brand-title {
+      h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: $text-primary;
+      }
+      span {
+        font-size: 0.7rem;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    }
+  }
+
+  .editor-sidebar-notice {
+    background: rgba($neon-coral, 0.05);
+    border: 1px dashed rgba($neon-coral, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+
+    h3 {
+      font-size: 0.9rem;
+      color: $neon-coral;
+      margin-bottom: 6px;
+    }
+    p {
+      font-size: 0.75rem;
+      color: $text-secondary;
+      line-height: 1.4;
+    }
+  }
+
+  .navigation-panel {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 12px;
+    animation: fadeIn 0.3s ease;
+
+    .panel-header {
+      margin-bottom: 10px;
+      .badge {
+        font-size: 0.6rem;
+        color: $neon-blue;
+        background: rgba($neon-blue, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 0.8rem;
+        color: $text-primary;
+        margin-top: 4px;
+      }
+    }
+
+    .steps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .step-badge {
+        width: 16px;
+        height: 16px;
+        background: $neon-blue;
+        color: #060913;
+        font-size: 0.65rem;
+        font-weight: 700;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .step-name {
+        font-size: 0.75rem;
+        color: $text-secondary;
+      }
+    }
+  }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid $border-color;
+    background: #090d16;
+
+    .btn-admin-panel {
+      width: 100%;
+      padding: 10px;
+      background: $bg-active;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      color: $text-primary;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: $neon-coral;
+        background: rgba($neon-coral, 0.05);
+      }
+
+      &.active {
+        background: $neon-coral;
+        color: #060913;
+        border-color: $neon-coral;
+      }
+    }
+  }
+}
+
+// ==========================================
+// COLUMN 2: CENTER MAP CANVAS VIEWPORT
+// ==========================================
+.zoo-map-main-area {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  // זה יוצר את השוליים השחורים מסביב ל"כרטיס" המפה
+  background: #030712; 
+  padding: 24px; // גודל השוליים השחורים
+
+  .map-viewport {
+    // השכבה הזו הופכת ל"כרטיס" המעוגל
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    // עיצוב הכרטיס
+    background: #020617; // רקע כהה מאוד בתוך המפה
+    border-radius: 40px;  // רדיוס מעוגל חזק
+    border: 1px solid rgba(255, 255, 255, 0.08); // מסגרת עדינה מאוד
+    
+    // אפקט התאורה (Dark Light)
+    box-shadow: 
+      inset 0 0 60px rgba(0, 0, 0, 0.8), // צל פנימי עמוק
+      0 0 30px rgba(99, 102, 241, 0.15); // זוהר חיצוני עדין (Indigo)
+
+    .map-background-image {
+      // התמונה בפנים תופסת את רוב השטח אך לא את כולו
+      width: 90%;  
+      height: 90%; 
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; 
+        opacity: 0.5;
+        
+        // שימוש ב-Luminosity או Overlay כדי למנוע את הירוק המשתלט
+        mix-blend-mode: screen; 
+        filter: brightness(0.8) contrast(1.2);
+      }
+    }
+  
+    // שכבת הגריד מעל התמונה אך מתחת לאלמנטים האינטראקטיביים
+    .map-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: 2;
+      pointer-events: none;
+      border-radius: 40px; // חייב להתאים לרדיוס של ה-viewport
+    }
+  }
+
+  // שכבות ה-SVG והמרקרים מוגבלות לתוך הרדיוס של ה-viewport
+  .map-svg-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: auto;
+    // מבטיח שהקווים לא יחרגו מהפינות המעוגלות
+    clip-path: inset(0 round 40px); 
+  }
+
+  .map-markers-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    clip-path: inset(0 round 40px);
+  }
+}
+
+// ==========================================
+// COLUMN 3: RIGHT AI CHAT COLUMN
+// ==========================================
+.ai-chat-panel {
+  background: rgba(11, 17, 32, 0.95);
+  border-left: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+
+  .chat-header {
+    padding: 20px 16px;
+    border-bottom: 1px solid $border-color;
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba($neon-blue, 0.1);
+      border: 1px solid rgba($neon-blue, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $neon-blue;
+
+      .pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: $neon-blue;
+        animation: ping 1.2s infinite;
+      }
+    }
+  }
+
+  // Inside container handles overflow internally
+  .chat-history {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+  }
+
+  .chat-message {
+    display: flex;
+    width: 100%;
+
+    &.user {
+      justify-content: flex-end;
+      .msg-bubble {
+        background: $bg-active;
+        border-color: $border-color;
+        border-bottom-right-radius: 2px;
+      }
+    }
+
+    &.ai {
+      justify-content: flex-start;
+      .msg-bubble {
+        background: rgba($neon-blue, 0.05);
+        border-color: rgba($neon-blue, 0.25);
+        border-bottom-left-radius: 2px;
+      }
+    }
+
+    .msg-bubble {
+      max-width: 85%;
+      border: 1px solid;
+      border-radius: 12px;
+      padding: 10px 12px;
+
+      p {
+        font-size: 0.8rem;
+        line-height: 1.45;
+        color: $text-primary;
+        margin: 0;
+      }
+    }
+  }
+
+  .chat-input-bar {
+    padding: 16px;
+    border-top: 1px solid $border-color;
+    background: #090d16;
+    display: flex;
+    gap: 8px;
+
+    input {
+      flex-grow: 1;
+      background: $bg-active;
+      border: 1px solid $border-color;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      color: $text-primary;
+      outline: none;
+
+      &:focus {
+        border-color: $neon-blue;
+      }
+    }
+
+    .btn-chat-send {
+      background: $neon-blue;
+      border: none;
+      width: 38px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+}
+
+/* Force the modal overlay to render on top of absolutely everything else */
+.login-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(2, 6, 23, 0.85) !important; /* Dark dim backdrop */
+    backdrop-filter: blur(8px) !important;      /* Blur the map behind it */
+    z-index: 99999 !important;                   /* Force it above the SVG map layers */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Ensure the login card itself has a solid background and layout */
+  .login-card {
+    background: #0f172a !important; /* Dark slate solid background */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    padding: 32px 24px !important;
+    width: 90% !important;
+    max-width: 400px !important;
+    position: relative !important;
+    z-index: 100000 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  }
+  
+  /* Clean styling for the top-right close button inside the modal */
+  .close-modal-btn {
+    position: absolute !important;
+    top: 16px !important;
+    right: 16px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 1.8rem !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    z-index: 100001 !important;
+    
+    &:hover {
+      color: #ffffff !important;
+    }
+  }
+
+  // Discrete trigger button styling
+.btn-admin-login-trigger {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(148, 163, 184, 0.35) !important; // Highly transparent grey
+    font-size: 0.75rem !important;              // Tiny text
+    padding: 6px 10px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;       // Pushed to the side
+    gap: 4px !important;
+    width: auto !important;                      // Not full-width
+    margin-left: auto !important;                // Align to the right
+    pointer-events: auto !important;
+  
+    .icon {
+      font-size: 0.8rem !important;
+      opacity: 0.5;
+      transition: opacity 0.2s ease;
+    }
+  
+    &:hover {
+      color: #6366f1 !important;                 // Elegant indigo highlight on hover
+      background: rgba(99, 102, 241, 0.08) !important;
+      border-radius: 4px;
+      
+      .icon {
+        opacity: 1;
+      }
+    }
+  }
+  

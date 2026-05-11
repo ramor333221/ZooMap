@@ -1,0 +1,156 @@
+// ==========================================================================
+// COMPACT INLINE ACTION FORM (Adapted for .app-sidebar integration)
+// ==========================================================================
+@import './variables';
+
+// We map any variables from your import that might differ to keep them consistent
+$accent-color: #6366f1;   
+$border-color: rgba(255, 255, 255, 0.08);
+$text-main: #f8fafc;
+$text-muted: #94a3b8;
+
+.inline-map-controls-form {
+  width: 100% !important;
+  margin: 15px 0;
+  background: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  animation: slideInDownForm 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  // CHANGED: Converted horizontal row to vertical column stack to fit sidebar
+  .controls-form-row {
+    display: flex;
+    flex-direction: column; 
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .form-info-segment {
+    margin-bottom: 2px;
+
+    .form-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: $text-main;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  // CHANGED: Items layout changed to vertical column block instead of flexing row items
+  .form-inputs-segment {
+    display: flex;
+    flex-direction: column; 
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  // Styled specifically for inputs and selectors inside the sidebar column
+  .form-input, .form-select {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.85rem;
+    color: $text-main;
+    outline: none;
+    transition: all 0.2s ease;
+
+    &:focus {
+      border-color: $accent-color;
+      box-shadow: 0 0 0 2px rgba($accent-color, 0.2);
+      background-color: rgba(0, 0, 0, 0.45);
+    }
+
+    &::placeholder {
+      color: rgba($text-muted, 0.4);
+    }
+  }
+
+  // Row specifically layout for coordinate metrics (X & Y split side-by-side)
+  .coord-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .coord-badge {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: $accent-color;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  // Action Panel buttons alignment (Cancel / Save)
+  .button-group-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-top: 6px;
+
+    button {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .save-btn {
+      background: $accent-color;
+      color: #fff;
+
+      &:hover {
+        background: lighten($accent-color, 8%);
+        box-shadow: 0 4px 12px rgba($accent-color, 0.25);
+      }
+
+      &:disabled {
+        background: rgba($text-muted, 0.2);
+        color: rgba($text-muted, 0.5);
+        cursor: not-allowed;
+      }
+    }
+
+    .cancel-btn {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid $border-color;
+      color: $text-muted;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: $text-main;
+      }
+    }
+  }
+}
+
+// ==========================================
+// Animations
+// ==========================================
+@keyframes slideInDownForm {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { authService } from '../Api/authService'; 
+import '../Scss/LoginModal.scss';
 
-const LoginComponent = () => {
+// Destructure the callbacks coming from ZooMap.jsx
+const Login = ({ onLoginSuccess, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -19,9 +21,18 @@ const LoginComponent = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await authService.login(formData);
-      console.log('Success:', data);
-      alert('Welcome back!');
+      const response = await authService.login(formData);
+      
+      // Save the token returned by your API
+      const token = response.token || response.data?.token;
+      if (token) {
+        localStorage.setItem('auth_token', token);
+      }
+      
+      // Trigger success callback to close modal and start editor
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
     } catch (err) {
       setError('Invalid username or password');
     } finally {
@@ -30,108 +41,61 @@ const LoginComponent = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2>Login</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="login-container-layout">
+      {/* Optional internal close button if desired, falls back to parent onClose */}
+      <form onSubmit={handleSubmit} className="futuristic-login-form">
+        <div className="form-header">
+          <span className="security-icon">🔐</span>
+          <h2>Admin Authentication</h2>
+          <p className="form-subtitle">Provide secure credentials to enter map override mode</p>
+        </div>
+
+        {error && (
+          <div className="login-error-message">
+            <span className="warning-symbol">⚠️</span>
+            <p>{error}</p>
+          </div>
+        )}
         
-        <div style={styles.inputGroup}>
+        {/* Adjusted class names to perfectly map to your LoginModal.scss */}
+        <div className="form-group">
           <label>Username</label>
           <input 
+            type="text"
             name="username" 
+            placeholder="Enter username"
             value={formData.username} 
             onChange={handleChange} 
             required 
           />
         </div>
 
-        <div style={styles.inputGroup}>
+        <div className="form-group">
           <label>Password</label>
           <input 
             type="password" 
             name="password" 
+            placeholder="••••••••"
             value={formData.password} 
             onChange={handleChange} 
             required 
           />
         </div>
 
-        <button type="submit" style={styles.button} disabled={loading}>
-          {loading ? 'Processing...' : 'Sign In'}
+        <button type="submit" className="btn-form-submit" disabled={loading}>
+          {loading ? (
+            <div className="button-loader-flex">
+              <span className="button-spinner"></span>
+              <span>Authenticating...</span>
+            </div>
+          ) : (
+            'Access Control Panel'
+          )}
         </button>
       </form>
     </div>
   );
 };
 
-const styles = {
-    container: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      backgroundColor: '#f4f7f6', // Light gray background for the whole page
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    },
-    form: {
-      padding: '2.5rem',
-      backgroundColor: '#ffffff',
-      borderRadius: '12px',
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)',
-      width: '100%',
-      maxWidth: '350px',
-    },
-    title: {
-      margin: '0 0 1.5rem 0',
-      textAlign: 'center',
-      color: '#333',
-      fontSize: '1.5rem',
-      fontWeight: '600',
-    },
-    inputGroup: {
-      marginBottom: '1.25rem',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-    },
-    label: {
-      fontSize: '0.875rem',
-      color: '#666',
-      fontWeight: '500',
-    },
-    input: {
-      padding: '0.75rem',
-      fontSize: '1rem',
-      border: '1px solid #ddd',
-      borderRadius: '6px',
-      outline: 'none',
-      transition: 'border-color 0.2s',
-    },
-    // Note: For hover/focus effects in JS-in-CSS, you'd usually use 
-    // a library or handle it via component state.
-    button: {
-      width: '100%',
-      padding: '0.8rem',
-      marginTop: '1rem',
-      backgroundColor: '#007bff',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      fontSize: '1rem',
-      fontWeight: '500',
-      cursor: 'pointer',
-      transition: 'background-color 0.2s, transform 0.1s',
-    },
-    errorText: {
-      color: '#d9534f',
-      fontSize: '0.85rem',
-      textAlign: 'center',
-      marginBottom: '1rem',
-      backgroundColor: '#fdf7f7',
-      padding: '0.5rem',
-      borderRadius: '4px',
-      border: '1px solid #d9534f',
-    }
-  };
-  
-export default LoginComponent;
+// Exporting as "Login" to match your: import Login from './Login' in ZooMap.jsx
+export default Login;

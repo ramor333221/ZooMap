@@ -1,25 +1,40 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { destinationService } from '../Api/destinationService';
+import DestinationForm from './DestinationForm'; // Clear separate form component
 
 const DestinationEditor = ({ destinations = [], action, onSaveSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
-        name: '', picUrl: '', description: '', category: 'CAGES', x: 0, y: 0
+        name: '', 
+        picUrl: '', 
+        description: '', 
+        category: 'CAGES', 
+        x: 0, 
+        y: 0
     });
 
-    const categories = ['CAGES', 'PICNIC_AREA', 'AMENITIES', 'CANCELED', 'TRAIL_SPLIT', 'ENTRANCE', 'EXIT', 'PARKING'];
+    const categories = [
+        'CAGES', 
+        'PICNIC_AREA', 
+        'AMENITIES', 
+        'CANCELED', 
+        'TRAIL_SPLIT', 
+        'ENTRANCE', 
+        'EXIT', 
+        'PARKING'
+    ];
 
     const handleMapClick = (e) => {
         const svg = e.currentTarget.closest('svg');
         const rect = svg.getBoundingClientRect();
         
-        // חישוב המיקום באחוזים יחסית ל-SVG
+        // Calculate coordinates as percentages relative to the parent SVG
         const xCoord = parseFloat((((e.clientX - rect.left) / rect.width) * 100).toFixed(2));
         const yCoord = parseFloat((((e.clientY - rect.top) / rect.height) * 100).toFixed(2));
     
-        // עדכון ה-State עם הקואורדינטות החדשות
+        // Update state hooks with precise placement coordinates
         setFormData(prev => ({ 
             ...prev, 
             x: xCoord, 
@@ -34,7 +49,6 @@ const DestinationEditor = ({ destinations = [], action, onSaveSuccess }) => {
         setLoading(true);
         
         try {
-            // בניית האובייקט כך שיתאים ל-DestinationDTO ב-Java
             const dataToSend = {
                 ...formData,
             };
@@ -44,57 +58,45 @@ const DestinationEditor = ({ destinations = [], action, onSaveSuccess }) => {
             if (onSaveSuccess) onSaveSuccess();
         } catch (err) {
             console.error("Save error:", err);
-            alert("שגיאה בשמירת הנקודה");
+            alert("Error trying to save the landmark.");
         } finally {
             setLoading(false);
         }
     };
 
+    // ==========================================
+    // PORTAL MOUNT TARGET CHANGE
+    // Dynamically target the sidebar instead of map-controls
+    // ==========================================
+    const sidebarContainer = document.querySelector('.app-sidebar');
+
     return (
-        <g className="destination-editor-group">
-            {/* 1. Clickable Area */}
+        <g className={`destination-editor-group ${showForm ? 'form-active' : ''}`}>
+            {/* 1. Transparent interactive SVG vector layer to capture coordinates */}
             <rect 
                 width="100" 
                 height="100" 
                 fill="transparent" 
-                style={{ cursor: action === 'create' ? 'crosshair' : 'default', pointerEvents: 'all' }}
+                style={{ 
+                    cursor: action === 'create' ? 'crosshair' : 'default', 
+                    pointerEvents: 'all' 
+                }}
                 onMouseDown={handleMapClick} 
             />
 
-            {/* 2. Portal Form (renders outside the SVG) */}
-            {showForm && ReactDOM.createPortal(
-                <div className="side-editor-panel">
-                    <form onSubmit={handleSubmit} className="side-form">
-                        <h3>נקודה חדשה</h3>
-                        <label>שם הנקודה:</label>
-                        <input 
-                            value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                            required 
-                        />
-                        
-                        <label>קטגוריה:</label>
-                        <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
-                            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                        </select>
-
-                        <label>תיאור:</label>
-                        <textarea 
-                            value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                        />
-                        
-                        <div className="coord-info">X: {formData.x} | Y: {formData.y}</div>
-
-                        <div className="button-group">
-                            <button type="submit" className="save-btn" disabled={loading}>
-                                {loading ? 'שומר...' : 'שמור'}
-                            </button>
-                            <button type="button" className="cancel-btn" onClick={() => setShowForm(false)}>ביטול</button>
-                        </div>
-                    </form>
+            {/* 2. Portal injecting the form into the .app-sidebar element */}
+            {showForm && sidebarContainer && ReactDOM.createPortal(
+                <div className="sidebar-form-wrapper">
+                    <DestinationForm 
+                        formData={formData}
+                        setFormData={setFormData}
+                        categories={categories}
+                        handleSubmit={handleSubmit}
+                        loading={loading}
+                        onCancel={() => setShowForm(false)}
+                    />
                 </div>,
-                document.body
+                sidebarContainer
             )}
         </g>
     );

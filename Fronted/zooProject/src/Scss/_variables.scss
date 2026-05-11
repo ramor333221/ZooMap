@@ -1,7 +1,20 @@
-$primary-blue: #2196F3;
-$admin-green: #4CAF50;
-$editor-orange: #FF9800;
-$danger-red: #f44336;
-$bg-light: #f0f0f0;
-$shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.1);
-$transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+// _variables.scss
+// ==========================================
+// CENTRAL DESIGN SYSTEM TOKENS
+// ==========================================
+
+$bg-main: radial-gradient(circle at center, #0e172a 0%, #030712 100%);
+$bg-surface: rgba(11, 17, 32, 0.85);
+$bg-active: #152038;
+$border-color: rgba(30, 41, 59, 0.8);
+
+// Theme Accent Colors
+$neon-blue: #38bdf8;        // Selected states, client-side route planner
+$neon-green: #10b981;       // Default active UI elements & pins
+$neon-coral: #f43f5e;       // Admin action / editor overrides
+$neon-coral-dark: #be123c;  // Admin primary gradients
+
+// Typography & Text
+$text-primary: #f8fafc;
+$text-secondary: #94a3b8;
+$font-family: 'Inter', -apple-system, sans-serif;

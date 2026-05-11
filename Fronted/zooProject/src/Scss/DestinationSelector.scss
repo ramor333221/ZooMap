@@ -1,80 +1,121 @@
-$primary-blue: #007AFF;
-$border-color: #e0e0e0;
+// ==========================================================================
+// FIXED SIDEBAR (Fills height, list scrolls internally)
+// ==========================================================================
+@import './variables';
 
-.destination-selector-sidebar {
-  width: 320px;
-  background: white;
-  border-left: 1px solid $border-color;
+.target-sidebar {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+  height: 100vh; // Constrain exactly to screen height
+  padding: 24px 20px;
+  background-color: rgba(11, 17, 32, 0.4);
+  border-right: 1px solid $border-color;
+  overflow: hidden; // Prevents sidebar from leaking out
 
-  h2 {
-    margin-bottom: 15px;
-    font-size: 1.5rem;
-    color: #333;
-    text-align: right;
-  }
-
-  .search-box {
+  .sidebar-header {
+    flex-shrink: 0; // Prevent headers from collapsing
     margin-bottom: 20px;
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid $border-color;
-      border-radius: 6px;
-      outline: none;
-      text-align: right;
-      &:focus { border-color: $primary-blue; }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: $text-primary;
+      margin-bottom: 6px;
+    }
+
+    p {
+      font-size: 0.8rem;
+      color: $text-secondary;
+      line-height: 1.4;
     }
   }
 
-  .destinations-list {
-    flex: 1;
-    overflow-y: auto;
-    direction: rtl; // גלילה בצד ימין
-    
-    .destination-item {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      margin-bottom: 8px;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+  // ONLY this inner container can scroll if you have 20+ targets
+  .targets-list {
+    flex-grow: 1;
+    overflow-y: auto; 
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-right: 6px;
 
-      &:hover {
-        background: #f8f9fa;
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+  }
+
+  .target-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background-color: $bg-active; 
+    border: 1px solid $border-color;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: $neon-blue; 
+      background-color: rgba($neon-blue, 0.02);
+    }
+
+    &.selected {
+      background-color: rgba($neon-blue, 0.06);
+      border-color: $neon-blue;
+
+      .target-name {
+        color: $text-primary;
+        font-weight: 600;
       }
 
-      &.active {
-        background: #e3f2fd;
-        border-right: 4px solid $primary-blue; // הדגשה בצד ימין
+      .custom-checkbox {
+        background-color: $neon-blue;
+        border-color: $neon-blue;
       }
+    }
 
-      input[type="checkbox"] {
-        margin-left: 12px;
-        transform: scale(1.2);
-      }
+    .target-name {
+      font-size: 0.825rem;
+      color: $text-secondary;
+    }
+  }
+
+  .checkbox-wrapper {
+    position: relative;
+    width: 16px;
+    height: 16px;
+
+    input { display: none; }
+
+    .custom-checkbox {
+      position: absolute;
+      inset: 0;
+      background-color: #0b1120;
+      border: 1px solid $border-color;
+      border-radius: 4px;
     }
   }
 
   .calculate-btn {
-    margin-top: 20px;
-    padding: 15px;
-    background: $primary-blue;
-    color: white;
+    flex-shrink: 0; // Keeps button locked to bottom of sidebar
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, $neon-blue, #0284c7);
+    color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-
-    &:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+    box-shadow: 0 4px 12px rgba($neon-blue, 0.15);
   }
 }

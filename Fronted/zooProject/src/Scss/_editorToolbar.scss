@@ -1,0 +1,307 @@
+// ==========================================
+// Variables (Matching core futuristic UI)
+// ==========================================
+$bg-panel: rgba(15, 23, 42, 0.4); 
+$border-color: rgba(255, 255, 255, 0.08);
+$accent-color: #6366f1;   
+$accent-hover: #818cf8;
+$error-color: #ef4444;    // Crimson Red for Sign Out
+$text-main: #f8fafc;
+$text-muted: #94a3b8;
+
+// ==========================================
+// Sidebar Placement Rules
+// ==========================================
+.app-sidebar {
+  position: relative !important; // Absolute container anchor for buttons
+  height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  // 1. DYNAMIC TOP MARGIN FOR ADMIN STATE
+  // If the admin panel elements exist, shift regular content down
+  &:has(.btn-logout), 
+  &:has(.compact-editor-toolbar) {
+    padding-top: 70px !important; 
+  }
+
+  // 2. SIGN OUT BUTTON (Absolute top of the page)
+  .btn-logout {
+    position: absolute !important;
+    top: 20px !important;         // Distance from the very top of the page
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 90% !important;        
+    padding: 10px 14px;
+    background: rgba($error-color, 0.1) !important;
+    border: 1px solid rgba($error-color, 0.2) !important;
+    border-radius: 8px;
+    color: lighten($error-color, 10%) !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 100 !important;      
+
+    &:hover {
+      background: $error-color !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba($error-color, 0.35);
+    }
+  }
+
+  // ==========================================
+  // 3. INTEGRATED SIDEBAR FORM STYLING
+  // ==========================================
+  .sidebar-form-wrapper {
+    width: 100% !important;
+    margin: 15px 0;
+    background: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid $border-color;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    animation: slideInDownForm 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+    .form-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: $text-main;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      // Label & Input layout
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        color: $text-muted;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      input, select, textarea {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid $border-color;
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: $text-main;
+        font-size: 0.85rem;
+        outline: none;
+        transition: all 0.2s ease;
+
+        &:focus {
+          border-color: $accent-color;
+          box-shadow: 0 0 0 2px rgba($accent-color, 0.2);
+          background: rgba(0, 0, 0, 0.45);
+        }
+
+        &::placeholder {
+          color: rgba($text-muted, 0.4);
+        }
+      }
+
+      // Read-only coordinate badge indicators
+      .coordinate-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+
+        input {
+          text-align: center;
+          font-family: monospace;
+          color: $accent-hover;
+          background: rgba(0, 0, 0, 0.4);
+          cursor: not-allowed;
+        }
+      }
+
+      // Submit and Cancel Buttons
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 6px;
+
+        button {
+          flex: 1;
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+          border: none;
+          transition: all 0.2s ease;
+        }
+
+        .btn-submit {
+          background: $accent-color;
+          color: #ffffff;
+
+          &:hover {
+            background: $accent-hover;
+            box-shadow: 0 4px 12px rgba($accent-color, 0.25);
+          }
+
+          &:disabled {
+            background: rgba($text-muted, 0.2);
+            color: rgba($text-muted, 0.5);
+            cursor: not-allowed;
+          }
+        }
+
+        .btn-cancel {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid $border-color;
+          color: $text-muted;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: $text-main;
+          }
+        }
+      }
+    }
+  }
+
+  // ==========================================
+  // 4. THE EDITOR TOOLBAR (Pushed Higher Up)
+  // ==========================================
+  .compact-editor-toolbar {
+    position: absolute !important; 
+    bottom: 450px !important;      // Pushed higher up to leave space for form/toggle actions
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 90% !important;        
+    box-shadow: none !important;  
+    background: $bg-panel !important;
+    border: 1px solid $border-color !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    z-index: 10 !important;
+    animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    
+    .toolbar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      .section-label {
+        color: $text-muted;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-align: left;
+      }
+
+      .button-group {
+        display: flex;
+        flex-direction: row; 
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 8px;
+        padding: 3px;
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        gap: 3px;
+        width: 100%;
+      }
+    }
+
+    .toolbar-btn {
+      flex: 1; 
+      display: flex;
+      align-items: center;
+      justify-content: center; 
+      gap: 6px;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      width: auto;
+
+      .btn-icon {
+        font-size: 0.85rem;
+      }
+
+      .btn-text {
+        text-align: center;
+      }
+    }
+
+    .toolbar-divider {
+      height: 1px;
+      width: 100%;
+      background: $border-color;
+      margin: 8px 0;
+    }
+  }
+
+  // 5. ADMIN PANEL TOGGLE BUTTON (Locks right below the toolbar)
+  .btn-admin-panel {
+    position: absolute !important;
+    bottom: 20px !important;       // Locks to the absolute bottom of the sidebar
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 90% !important;        
+    padding: 12px !important;
+    background: rgba($bg-panel, 0.8) !important;
+    border: 1px solid $border-color !important;
+    border-radius: 8px !important;
+    color: $text-main !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    z-index: 11 !important;
+
+    &:hover {
+      background: rgba($accent-color, 0.15) !important;
+      border-color: $accent-hover !important;
+    }
+
+    &.active {
+      background: $accent-color !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 12px rgba($accent-color, 0.3) !important;
+    }
+  }
+}
+
+// ==========================================
+// Animations
+// ==========================================
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 15px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes slideInDownForm {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

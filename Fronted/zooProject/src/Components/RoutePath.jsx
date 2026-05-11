@@ -8,34 +8,41 @@ const RoutePath = ({ route, isHighlighted, isDimmed }) => {
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
     .join(' ');
 
+  // Classic Map Palette
+  const baseBeige = "#F5F5DC";      // Light Cream/Beige
+  const borderBeige = "#D2B48C";    // Darker Tan for the "road" edges
+  const highlightColor = "#E6C9A8"; // Warm highlight
+
   return (
-    <g>
-      {/* קו רקע שקוף למחצה - עוזר לראות את הנתיב הכללי */}
+    <g className={`map-path-group ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''}`}>
+      
+      {/* 1. The Outer "Border" of the route - makes it look like a real road */}
       <path
         d={pathData}
         fill="none"
-        stroke={isHighlighted ? "#007AFF" : "#e0e0e0"}
-        strokeWidth={isHighlighted ? "3" : "4"}
+        stroke={isHighlighted ? highlightColor : borderBeige}
+        strokeWidth={isHighlighted ? "6" : "5"} 
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity={isHighlighted ? 0.3 : (isDimmed ? 0.1 : 0.4)}
-        style={{ transition: 'all 0.3s' }}
+        opacity={isDimmed ? 0.2 : 0.8}
+        style={{ transition: 'all 0.4s ease' }}
       />
 
-      {/* הקו האקטיבי/המודגש */}
+      {/* 2. The Main Route Body (Inner Path) */}
       <motion.path
         d={pathData}
         fill="none"
-        stroke={isHighlighted ? "#007AFF" : "#4CAF50"} // כחול למסלול נבחר, ירוק לרגיל
-        strokeWidth={isHighlighted ? "2.5" : "2"}
+        stroke={baseBeige}
+        strokeWidth={isHighlighted ? "3.5" : "3"}
+        // Using "round" linecap and join is crucial for the "one route" look
         strokeLinecap="round"
         strokeLinejoin="round"
-        initial={isHighlighted ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 0.6 }}
+        initial={isHighlighted ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 1 }}
         animate={{ 
             pathLength: 1, 
-            opacity: isHighlighted ? 1 : (isDimmed ? 0.2 : 0.6) 
+            opacity: isDimmed ? 0.3 : 1 
         }}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
+        transition={{ duration: 1.5, ease: "linear" }}
       />
     </g>
   );

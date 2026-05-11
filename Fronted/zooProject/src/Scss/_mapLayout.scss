@@ -1,0 +1,76 @@
+// ==========================================================================
+// CENTER VIEWPORT LAYOUT (The "Dark Light" Frame)
+// ==========================================================================
+$deep-black: #000000;
+$neon-glow: rgba(99, 102, 241, 0.2); // Subtle Indigo Light
+$border-light: rgba(255, 255, 255, 0.1);
+
+.zoo-app-layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: $deep-black; // This ensures the margin is black
+  overflow: hidden;
+}
+
+.center-viewport-container {
+  flex: 1;
+  display: flex;
+  // This creates the physical margin/gap between panels
+  padding: 24px !important; 
+  background: $deep-black !important; 
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.zoo-map-main-area {
+  flex: 1;
+  position: relative;
+  background: #0a0a0a; // Slightly lighter black for the "card"
+  border-radius: 28px; 
+  overflow: hidden;
+  
+  // THE LIGHTS: Inner glow and thin neon border
+  border: 1px solid $border-light;
+  box-shadow: 
+    inset 0 0 30px rgba(0, 0, 0, 1), // Depth
+    0 0 15px $neon-glow; // Outer soft light
+
+  .map-viewport {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: #1b4332 !important; // FORCED GREEN BASE
+    
+    .map-background-image {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%; 
+      height: 80%;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0.5;
+        // This stops the "gray" look by blending with the green
+        mix-blend-mode: luminosity; 
+      }
+    }
+
+    .map-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      z-index: 2;
+      pointer-events: none;
+    }
+  }
+}

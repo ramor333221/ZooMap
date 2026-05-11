@@ -1,0 +1,147 @@
+$dark-red: #8b0000;
+$accent-red: #ff4d4d;
+
+.map-point-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  
+  // אנימציית כניסה: הנקודה מופיעה בנפילה קלה וגדילה
+  animation: pointAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+
+  .pin-wrapper {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.1) translateY(-5px);
+    }
+
+    .pin-image-frame {
+      width: 42px;
+      height: 42px;
+      border-radius: 50% 50% 50% 0;
+      border: 2px solid $dark-red;
+      background: $dark-red;
+      overflow: hidden;
+      transform: rotate(-45deg);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 2;
+      
+      .pin-destination-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: rotate(45deg) scale(1.25);
+      }
+    }
+
+    // אלמנט הפעימה (Radar Pulse)
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      background: rgba($dark-red, 0.4);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      animation: pulse-ring 2s infinite ease-out;
+      pointer-events: none;
+    }
+  }
+
+  .dest-tooltip-professional {
+    position: absolute;
+    bottom: 55px;
+    width: 250px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    overflow: hidden;
+    z-index: 110;
+    
+    // אנימציית כניסה ל-Tooltip
+    animation: tooltipSlideUp 0.3s ease-out both;
+
+    .tooltip-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: #1a1a1a;
+      color: white;
+
+      .header-thumb {
+        width: 35px;
+        height: 35px;
+        border-radius: 6px;
+        object-fit: cover;
+        margin-right: 10px;
+      }
+
+      .header-text {
+        .dest-title {
+          font-size: 0.85rem;
+          font-weight: 700;
+          margin: 0;
+          color: #ffffff;
+        }
+        .dest-category {
+          font-size: 0.7rem;
+          color: #bbbbbb;
+          display: block;
+        }
+      }
+    }
+
+    .dest-body {
+      padding: 12px;
+      .dest-description {
+        font-size: 0.8rem;
+        color: #333;
+        line-height: 1.4;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// --- הגדרות Keyframes ---
+
+@keyframes pointAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes tooltipSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
