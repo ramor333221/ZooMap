@@ -21,7 +21,7 @@ const RoutePath = ({ route, isHighlighted, isDimmed }) => {
         d={pathData}
         fill="none"
         stroke={isHighlighted ? highlightColor : borderBeige}
-        strokeWidth={isHighlighted ? "6" : "5"} 
+        strokeWidth={isHighlighted ? "4" : "3"} 
         strokeLinecap="round"
         strokeLinejoin="round"
         opacity={isDimmed ? 0.2 : 0.8}
@@ -33,7 +33,7 @@ const RoutePath = ({ route, isHighlighted, isDimmed }) => {
         d={pathData}
         fill="none"
         stroke={baseBeige}
-        strokeWidth={isHighlighted ? "3.5" : "3"}
+        strokeWidth={isHighlighted ? "2.5" : "2"}
         // Using "round" linecap and join is crucial for the "one route" look
         strokeLinecap="round"
         strokeLinejoin="round"

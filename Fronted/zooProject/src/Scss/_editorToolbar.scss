@@ -222,32 +222,49 @@ $text-muted: #94a3b8;
       }
     }
 
-    .toolbar-btn {
-      flex: 1; 
-      display: flex;
-      align-items: center;
-      justify-content: center; 
-      gap: 6px;
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      width: auto;
+// Inside your .compact-editor-toolbar block...
 
-      .btn-icon {
-        font-size: 0.85rem;
-      }
+.toolbar-btn {
+  flex: 1; 
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 6px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  
+  // Base State
+  background: transparent;
+  border: 1px solid transparent;
+  color: $text-muted;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
-      .btn-text {
-        text-align: center;
-      }
+  // Hover effect for unselected buttons
+  &:hover:not(.active) {
+    background: rgba($accent-color, 0.1);
+    color: $text-main;
+  }
+
+  // ACTIVE STATE - This triggers when the button is chosen
+  &.active {
+    background: $accent-color !important; // Your #6366f1
+    color: #ffffff !important;
+    border-color: $accent-hover !important;
+    
+    // Glowing effect to match futuristic UI
+    box-shadow: 0 0 15px rgba($accent-color, 0.4);
+
+    .btn-icon {
+      filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
     }
-
-    .toolbar-divider {
-      height: 1px;
-      width: 100%;
-      background: $border-color;
-      margin: 8px 0;
+    
+    .btn-text {
+      font-weight: 700;
     }
+  }
+}
   }
 
   // 5. ADMIN PANEL TOGGLE BUTTON (Locks right below the toolbar)
@@ -279,7 +296,7 @@ $text-muted: #94a3b8;
       box-shadow: 0 4px 12px rgba($accent-color, 0.3) !important;
     }
   }
-}
+
 
 // ==========================================
 // Animations
@@ -304,4 +321,5 @@ $text-muted: #94a3b8;
     opacity: 1;
     transform: translateY(0);
   }
+}
 }

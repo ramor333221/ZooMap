@@ -7,8 +7,10 @@ import DestinationPoint from './DestinationPoint';
 import DestinationSelector from './DestinationSelector';
 import MapEditorManager from './MapEditorManager'; 
 import Login from './Login'; 
+import Map3DView from './Map3DView'
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
+
 
 const ZooMap = () => {
     const [routes, setRoutes] = useState([]);
@@ -24,6 +26,7 @@ const ZooMap = () => {
     ]);
     const [inputMessage, setInputMessage] = useState('');
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [viewMode, setViewMode] = useState('2D');
 
     const toggleTarget = (id) => {
         if (optimizedRoute) setOptimizedRoute(null);
@@ -160,44 +163,62 @@ const ZooMap = () => {
                     </div>
                 </aside>
 
-                {/* CENTER PANEL: THE FIX IS HERE */}
-                <div className="center-viewport-container">
-                    <main className="zoo-map-main-area">
-                        <div className="map-viewport">
-                            <div className="map-terrain-base"></div>
-                            
-                            <div className="map-background-image">
-                                <img src="./mapBackground.png" alt="Map Design" />
-                            </div>
-                            
-                            <div className="map-grid-overlay"></div>
+                {/* CENTER PANEL */}
+<div className="center-viewport-container">
+    {/* Floating View Controls */}
+    <div className="view-mode-controls">
+        <button 
+            className={`btn-view ${viewMode === '2D' ? 'active' : ''}`} 
+            onClick={() => setViewMode('2D')}
+        >
+            🗺️ 2D Map
+        </button>
+        <button 
+            className={`btn-view ${viewMode === '3D' ? 'active' : ''}`} 
+            onClick={() => setViewMode('3D')}
+        >
+            🧊 3D Simulation
+        </button>
+    </div>
 
-                            <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                {routes.map(route => (
-                                    <RoutePath key={route.id} route={route} isDimmed={!!optimizedRoute} />
-                                ))}
-                                {optimizedRoute && optimizedRoute.pathEdges.map(edge => (
-                                    <RoutePath key={`opt-${edge.id}`} route={edge} isHighlighted={true} />
-                                ))}
-                                {isAdmin && isEditorActive && (
-                                    <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
-                                )}
-                            </svg>
-
-                            <div className="map-markers-layer">
-                                {destinations.map(dest => (
-                                    <DestinationPoint
-                                        key={dest.id}
-                                        destination={dest}
-                                        isEditorActive={isEditorActive}
-                                        isSelected={selectedTargets.includes(dest.id)}
-                                        onClick={() => !isEditorActive && toggleTarget(dest.id)}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </main>
+    <main className="zoo-map-main-area">
+        {viewMode === '2D' ? (
+            <div className="map-viewport">
+                <div className="map-terrain-base"></div>
+                <div className="map-background-image">
+                    <img src="./mapBackground.png" alt="Map Design" />
                 </div>
+                <div className="map-grid-overlay"></div>
+
+                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    {routes.map(route => (
+                        <RoutePath key={route.id} route={route} isDimmed={!!optimizedRoute} />
+                    ))}
+                    {optimizedRoute && optimizedRoute.pathEdges.map(edge => (
+                        <RoutePath key={`opt-${edge.id}`} route={edge} isHighlighted={true} />
+                    ))}
+                    {isAdmin && isEditorActive && (
+                        <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
+                    )}
+                </svg>
+
+                <div className="map-markers-layer">
+                    {destinations.map(dest => (
+                        <DestinationPoint
+                            key={dest.id}
+                            destination={dest}
+                            isEditorActive={isEditorActive}
+                            isSelected={selectedTargets.includes(dest.id)}
+                            onClick={() => !isEditorActive && toggleTarget(dest.id)}
+                        />
+                    ))}
+                </div>
+            </div>
+        ) : (
+            <Map3DView routes={routes} destinations={destinations} />
+        )}
+    </main>
+</div>
 
                 {/* RIGHT PANEL */}
                 <aside className="ai-chat-panel">

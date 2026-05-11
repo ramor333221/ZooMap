@@ -27,7 +27,7 @@ const EditorToolbar = ({ mode, setMode, action, setAction }) => {
                     </button>
                 </div>
             </div>
-            
+             
             <div className="toolbar-divider" />
 
             {/* Action Selectors (Create vs Edit/Move) */}
