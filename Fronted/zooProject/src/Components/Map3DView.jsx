@@ -1,104 +1,105 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { 
-  OrbitControls, 
-  PerspectiveCamera, 
-  Sky, 
-  ContactShadows, 
-  Stars,
-  BakeShadows,
-  Float
+  OrbitControls, PerspectiveCamera, Sky, Cloud,
+  ContactShadows, Stars, BakeShadows
 } from '@react-three/drei';
 import Destination3D from './Destination3D';
 import Route3D from './Route3D';
 
+const NatureElement = ({ position }) => (
+  <group position={position} scale={0.7 + Math.random()}>
+    <mesh position={[0, 1, 0]} castShadow>
+      <cylinderGeometry args={[0.12, 0.28, 2, 6]} />
+      <meshStandardMaterial color="#3d2b1f" roughness={0.9} />
+    </mesh>
+    <mesh position={[0, 2.8, 0]} castShadow>
+      <sphereGeometry args={[1.4, 8, 8]} />
+      <meshStandardMaterial 
+        color="#15803d" 
+        roughness={1} 
+      />
+    </mesh>
+  </group>
+);
+
 const Map3DView = ({ routes, destinations, selectedRouteId }) => {
   return (
-    <div className="map-3d-wrapper" style={{ width: '100%', height: '100%', background: '#1a1a1a' }}>
+    <div style={{ width: '100%', height: '100vh', background: '#7cd1f9' }}>
       <Canvas 
         shadows 
-        gl={{ antialias: true }}
+        // toneMappingExposure נקבע ל-1.4 כדי להגביר את בהירות המצלמה הכללית
+        gl={{ antialias: true, toneMappingExposure: 1.4 }}
       >
-        {/* מצלמה הממוקמת בזווית שנותנת תחושת מרחב */}
-        <PerspectiveCamera 
-          makeDefault 
-          position={[0, 50, 80]} 
-          fov={35} 
+        <PerspectiveCamera makeDefault position={[55, 55, 55]} fov={35} />
+        
+        <OrbitControls 
+          enableDamping
+          maxPolarAngle={Math.PI / 2.2} 
+          minDistance={15} 
+          maxDistance={150} 
+        />
+
+        {/* הגדרות שמיים כחולים עם שמש גבוהה ובוהקת */}
+        <Sky 
+          distance={450000}
+          sunPosition={[0, 1, 0]} // מיקום שמש ישיר מעל הראש לאור חזק
+          turbidity={0.01} // שמיים נקיים לחלוטין מאובך
+          rayleigh={1.5} // צבע כחול קלאסי ובהיר לשמיים
+          mieCoefficient={0.005}
+          mieDirectionalG={0.8}
         />
         
-        {/* בקרת מצלמה חלקה עם הגבלות גובה למראה ריאליסטי */}
-        <OrbitControls 
-        enableDamping={true}
-        dampingFactor={0.05}
-        minDistance={5}        // מאפשר להתקרב מאוד לאדמה
-        maxDistance={100}      // טווח זום החוצה
-        maxPolarAngle={Math.PI / 2.1} // מאפשר להוריד את המבט לגובה העיניים
-        enablePan={true}       // חשוב! מאפשר להזיז את המפה (ללחוץ על ימני ולגרור)
-        panSpeed={1.5}
-        />
+        {/* עננים לבנים ורכים שמשתלבים ביום השמש */}
+        <Cloud position={[-20, 35, -40]} speed={0.1} opacity={0.8} color="#ffffff" />
+        <Cloud position={[40, 30, 20]} speed={0.12} opacity={0.7} color="#ffffff" />
 
-        {/* אווירה: שמיים וכוכבים ללא צורך בנכסים חיצוניים */}
-        <Sky 
-          distance={450000} 
-          sunPosition={[5, 10, 20]} 
-          inclination={0.6} 
-          azimuth={0.1} 
-        />
-        <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
-
-        {/* תאורה שכבתית למראה עמוק */}
-        <ambientLight intensity={0.4} />
-        <hemisphereLight intensity={0.4} color="#ffffff" groundColor="#444444" />
+        {/* מערך תאורה עוצמתי במיוחד */}
+        <ambientLight intensity={1.2} /> {/* תאורת סביבה גבוהה שמבטלת פינות חשוכות */}
         <directionalLight 
-          position={[20, 50, 20]} 
-          intensity={1.2} 
+          position={[40, 120, 40]} // מקור האור תואם למיקום השמש
+          intensity={2.8} // עוצמת אור שמש חזקה במיוחד
           castShadow 
-          shadow-mapSize={[1024, 1024]}
+          shadow-mapSize={[2048, 2048]} 
+          color="#ffffff" // אור לבן ונקי
         />
 
-        <group scale={[0.85, 0.85, 0.85]}>
-          
-          {/* קרקע גן החיות - ירוק עמוק וטבעי */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
-            <planeGeometry args={[120, 120]} />
-            <meshStandardMaterial 
-                color="#2d4a22" 
-                roughness={1} 
-                metalness={0}
-            />
+        <group scale={0.9}>
+          {/* דשא ירוק וחי */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+            <planeGeometry args={[250, 250]} />
+            <meshStandardMaterial color="#22c55e" roughness={0.8} />
           </mesh>
 
-          {/* צללים רכים ש"מדביקים" את האובייקטים לקרקע */}
-          <ContactShadows 
-            position={[0, 0, 0]} 
-            opacity={0.5} 
-            scale={120} 
-            blur={2.5} 
-            far={10} 
-          />
-
-          {/* רינדור שבילי ההליכה (בז') */}
-          {routes?.map((route) => (
-            <Route3D 
-              key={route.id} 
-              data={route} 
-              isHighlighted={selectedRouteId === route.id} 
-              isDimmed={selectedRouteId && selectedRouteId !== route.id}
-            />
+          {Array.from({ length: 55 }).map((_, i) => (
+            <NatureElement key={i} position={[
+              (Math.random() - 0.5) * 180, 
+              0, 
+              (Math.random() - 0.5) * 180
+            ]} />
           ))}
 
-          {/* רינדור נקודות העניין והחיות */}
-          {destinations?.map((dest, i) => (
-            <Destination3D 
-              key={dest.id || i} 
-              data={dest} 
-              // צבעים המייצגים אזורים שונים בגן
-              color={i % 3 === 0 ? "#8b5e34" : (i % 2 === 0 ? "#10b981" : "#f59e0b")} 
-            />
-          ))}
+          <Suspense fallback={null}>
+            {routes?.map((route) => (
+              <Route3D 
+                key={route.id} 
+                data={route} 
+                isHighlighted={selectedRouteId === route.id} 
+                isDimmed={selectedRouteId && selectedRouteId !== route.id}
+              />
+            ))}
 
-        
-          
+            {destinations?.map((dest, i) => (
+              <Destination3D 
+                key={dest.id || i} 
+                data={dest} 
+                color="#2563eb" // תגיות כחולות בולטות
+              />
+            ))}
+          </Suspense>
+
+          {/* צללים רכים שלא מחשיכים את הדשא יותר מדי */}
+          <ContactShadows position={[0, 0.01, 0]} opacity={0.3} scale={200} blur={3} far={15} />
         </group>
 
         <BakeShadows />

@@ -1,78 +1,60 @@
 import React, { useState } from 'react';
 import * as THREE from 'three';
-import { Billboard, useTexture, Html } from '@react-three/drei';
+import { Billboard, useTexture, Html, Float } from '@react-three/drei';
 
 const Destination3D = ({ data, color }) => {
   const [hovered, setHovered] = useState(false);
-  
-  // מיקום המשתנה לפי נתוני המפה
+  const texture = useTexture(`/${data.picUrl}`);
+
   const posX = (data.location?.x ?? data.x) - 50;
   const posZ = (data.location?.y ?? data.y) - 50;
-  
-  // טעינת התמונה של החיה
-  const texture = useTexture(`/${data.picUrl}`);
 
   if (isNaN(posX) || isNaN(posZ)) return null;
 
   return (
     <group position={[posX, 0, posZ]}>
-      
-      {/* בסיס התצוגה - סלע או משטח עליו החיה "עומדת" */}
-      <mesh position={[0, 0.05, 0]} receiveShadow>
-        <cylinderGeometry args={[1.5, 1.8, 0.2, 32]} />
-        <meshStandardMaterial color="#555" roughness={0.8} />
+      {/* Vibrant Pedestal */}
+      <mesh position={[0, 0.15, 0]} receiveShadow castShadow>
+        <cylinderGeometry args={[1.8, 2.2, 0.4, 8]} />
+        <meshStandardMaterial color="#4b3621" roughness={0.6} metalness={0.2} />
       </mesh>
 
-      {/* החיה עצמה - מוצבת כ-Billboard כדי שתמיד יראו אותה */}
-      <Billboard
-        follow={true}
-        lockX={false}
-        lockY={false}
-        lockZ={false}
-        position={[0, 1.4, 0]} // מגביה את מרכז התמונה כך שהרגליים יגעו בבסיס
-      >
-        <mesh 
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
-        >
-          {/* גודל התמונה - התאמה לפי הצורך (כאן 2.8 על 2.8) */}
-          <planeGeometry args={[2.8, 2.8]} />
-          <meshBasicMaterial 
-            map={texture} 
-            transparent={true} 
-            side={THREE.DoubleSide}
-            alphaTest={0.5} // חותך את השקיפות מסביב לחיה
-          />
-        </mesh>
-      </Billboard>
+      {/* Animated Animal Image */}
+      <Float speed={hovered ? 5 : 2} rotationIntensity={0.2} floatIntensity={0.5}>
+        <Billboard position={[0, 2, 0]}>
+          <mesh 
+            onPointerOver={() => setHovered(true)}
+            onPointerOut={() => setHovered(false)}
+          >
+            <planeGeometry args={[3.2, 3.2]} />
+            <meshStandardMaterial 
+              map={texture} 
+              transparent={true} 
+              alphaTest={0.5} 
+              side={THREE.DoubleSide}
+              emissive="#ffffff"
+              emissiveIntensity={hovered ? 0.2 : 0}
+            />
+          </mesh>
+        </Billboard>
+      </Float>
 
-      {/* שלט הסבר קטן ליד החיה (כמו בגן חיות) */}
-      <group position={[1.5, 0.2, 1]} rotation={[0, Math.PI / 4, 0]}>
-        <mesh position={[0, 0.3, 0]}>
-          <boxGeometry args={[0.1, 0.6, 0.1]} />
-          <meshStandardMaterial color="#333" />
-        </mesh>
-        <Html transform position={[0, 0.6, 0]} distanceFactor={5}>
-          <div style={{
-            background: '#f0f0f0',
-            padding: '2px 8px',
-            border: '1px solid #333',
-            fontSize: '8px',
-            fontWeight: 'bold',
-            color: '#222',
-            whiteSpace: 'nowrap'
-          }}>
-            {data.name}
-          </div>
-        </Html>
-      </group>
-
-      {/* צל דקורטיבי מסביב למתחם */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <circleGeometry args={[2, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={0.1} />
-      </mesh>
-
+      {/* Styled Label */}
+      <Html position={[0, 4, 0]} center distanceFactor={8}>
+        <div style={{
+          background: color,
+          color: 'white',
+          padding: '4px 12px',
+          borderRadius: '20px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          boxShadow: '0px 4px 10px rgba(0,0,0,0.3)',
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap'
+        }}>
+          {data.name}
+        </div>
+      </Html>
     </group>
   );
 };

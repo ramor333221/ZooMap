@@ -33,7 +33,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // שינוי ל-OriginPatterns פותר את בעיית ה-Credentials מול הכוכבית
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:5174", "http://127.0.0.1:5174"));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
@@ -47,14 +47,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .cors().and() // מוודא ש-Spring משתמש ב-Bean שהגדרנו למעלה
+                .cors().and()
                 .csrf().disable()
+                // שורה זו נחוצה אם אתה משתמש ב-H2 Console כדי למנוע חסימת פריימים
+                .headers().frameOptions().disable().and()
+
                 .authorizeRequests()
+                // תיקון קריטי: החרגת נקודת הקצה של ה-WebSocket מאימות JWT
+                .antMatchers("/ws-endpoint/**").permitAll()
+
                 .antMatchers("/api/v1/admin/login").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
                 .antMatchers("/api/v1/public/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
+                // הפילטר של ה-JWT ירוץ רק על נתיבים שדורשים אימות
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
     }
 }

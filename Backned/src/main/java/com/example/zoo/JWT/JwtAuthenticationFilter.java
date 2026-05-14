@@ -29,6 +29,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
+        if (path.startsWith("/ws-endpoint")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 🔴 whitelist ברור
         if (path.startsWith("/api/v1/public") ||
                 path.equals("/api/v1/admin/login")) {
