@@ -3,6 +3,7 @@ package com.example.zoo.Service;
 import com.example.zoo.DTO.RouteResponseDTO;
 import com.example.zoo.Entities.Destination;
 import com.example.zoo.Entities.Route;
+import com.example.zoo.Exceptions.AppExceptions; // ייבוא קובץ החריגות המרכזי
 import com.example.zoo.Repositories.RouteRepo;
 import com.example.zoo.Repositories.DestinationRepo;
 import javax.annotation.PostConstruct;
@@ -41,11 +42,26 @@ public class NavigationService {
     }
 
     public RouteResponseDTO getOptimizedRoute(List<Integer> selectedTargetIds, Integer startId, Integer endId) {
-        if (selectedTargetIds == null || selectedTargetIds.isEmpty()) return new RouteResponseDTO();
+        // בדיקה אם הרשימה ריקה
+        if (selectedTargetIds == null || selectedTargetIds.isEmpty()) {
+            throw new AppExceptions.BadRequest("No targets selected for navigation");
+        }
+
+        // בדיקה שהגרף הוטען
+        if (currentGraph == null || currentGraph.vertexSet().isEmpty()) {
+            throw new AppExceptions.InvalidRoute("The zoo map graph is not loaded or empty");
+        }
 
         Set<Integer> allNodesToVisit = new HashSet<>(selectedTargetIds);
         if (startId != null) allNodesToVisit.add(startId);
         if (endId != null) allNodesToVisit.add(endId);
+
+        // בדיקה שכל הנקודות קיימות בגרף לפני שמתחילים
+        for (Integer nodeId : allNodesToVisit) {
+            if (!currentGraph.containsVertex(nodeId)) {
+                throw new AppExceptions.ResourceNotFound("Location ID " + nodeId + " is not connected to the zoo map");
+            }
+        }
 
         Graph<Integer, DefaultWeightedEdge> targetGraph = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
         allNodesToVisit.forEach(targetGraph::addVertex);
@@ -56,6 +72,7 @@ public class NavigationService {
                 int u = nodeList.get(i);
                 int v = nodeList.get(j);
                 double weight = dijkstra.getPathWeight(u, v);
+
                 if (weight < Double.MAX_VALUE) {
                     DefaultWeightedEdge e = targetGraph.addEdge(u, v);
                     if (e != null) targetGraph.setEdgeWeight(e, weight);
@@ -64,7 +81,14 @@ public class NavigationService {
         }
 
         TwoOptHeuristicTSP<Integer, DefaultWeightedEdge> tspSolver = new TwoOptHeuristicTSP<>();
-        List<Integer> tourIds = new ArrayList<>(tspSolver.getTour(targetGraph).getVertexList());
+
+        List<Integer> tourIds;
+        try {
+            tourIds = new ArrayList<>(tspSolver.getTour(targetGraph).getVertexList());
+        } catch (Exception e) {
+            throw new AppExceptions.InvalidRoute("Could not calculate a valid tour between the selected locations");
+        }
+
         List<Integer> orderedStopIds = processPath(tourIds, startId, endId);
 
         List<Integer> fullPathIds = new ArrayList<>();
@@ -76,16 +100,18 @@ public class NavigationService {
             Integer v = orderedStopIds.get(i + 1);
             GraphPath<Integer, DefaultWeightedEdge> path = dijkstra.getPath(u, v);
 
-            if (path != null) {
-                totalDistance += path.getWeight();
-                List<Integer> segmentVertices = path.getVertexList();
-                fullPathIds.addAll(segmentVertices.subList(0, segmentVertices.size() - 1));
+            if (path == null) {
+                throw new AppExceptions.InvalidRoute("No path found between: " + u + " and " + v);
+            }
 
-                for (DefaultWeightedEdge edge : path.getEdgeList()) {
-                    int s = currentGraph.getEdgeSource(edge);
-                    int t = currentGraph.getEdgeTarget(edge);
-                    routeRepo.findEdgeBetween(s, t).ifPresent(pathEdges::add);
-                }
+            totalDistance += path.getWeight();
+            List<Integer> segmentVertices = path.getVertexList();
+            fullPathIds.addAll(segmentVertices.subList(0, segmentVertices.size() - 1));
+
+            for (DefaultWeightedEdge edge : path.getEdgeList()) {
+                int s = currentGraph.getEdgeSource(edge);
+                int t = currentGraph.getEdgeTarget(edge);
+                routeRepo.findEdgeBetween(s, t).ifPresent(pathEdges::add);
             }
         }
         fullPathIds.add(orderedStopIds.get(orderedStopIds.size() - 1));

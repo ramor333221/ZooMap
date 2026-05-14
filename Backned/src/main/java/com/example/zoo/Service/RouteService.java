@@ -2,6 +2,7 @@ package com.example.zoo.Service;
 
 import com.example.zoo.DTO.RouteDTO;
 import com.example.zoo.Entities.Route;
+import com.example.zoo.Exceptions.AppExceptions; // ייבוא קובץ החריגות המרכזי
 import com.example.zoo.Repositories.RouteRepo;
 import com.example.zoo.Repositories.DestinationRepo;
 import org.jgrapht.Graph;
@@ -31,13 +32,14 @@ public class RouteService {
     @Transactional(readOnly = true)
     public List<Route> getAll() {
         List<Route> list = routeRepo.findAll();
-        if (list.isEmpty()) throw new RuntimeException("אין מסלולים במערכת");
+        if (list.isEmpty()) {
+            throw new AppExceptions.ResourceNotFound("No routes found in the system");
+        }
         return list;
     }
 
     @Transactional
     public Route addRoute(RouteDTO dto) {
-        // הוספת bodyPoints לבנייה של האובייקט
         Route newRoute = routeRepo.save(Route.builder()
                 .dist(dto.getDist())
                 .fromD(dto.getFromD())
@@ -52,16 +54,19 @@ public class RouteService {
     @Transactional
     public Route updateRoute(int id, RouteDTO dto) {
         Route existingRoute = routeRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("עדכון נכשל: מסלול לא נמצא"));
+                .orElseThrow(() -> new AppExceptions.ResourceNotFound("Update failed: Route not found with id: " + id));
 
+        // וולידציה: מניעת מצב שבו עדכון משאיר יעד ללא מסלול יוצא
         if (existingRoute.getFromD() != dto.getFromD()) {
             if (routeRepo.countByFromD(existingRoute.getFromD()) <= 1) {
-                throw new RuntimeException("לא ניתן לעדכן: יעד המקור (" + existingRoute.getFromD() + ") יישאר ללא מסלול יוצא!");
+                throw new AppExceptions.BadRequest("Update rejected: Origin destination (" + existingRoute.getFromD() + ") would be left without an outgoing route!");
             }
         }
+
+        // וולידציה: מניעת מצב שבו עדכון משאיר יעד ללא מסלול נכנס
         if (existingRoute.getToD() != dto.getToD()) {
             if (routeRepo.countByToD(existingRoute.getToD()) <= 1) {
-                throw new RuntimeException("לא ניתן לעדכן: יעד היעד (" + existingRoute.getToD() + ") יישאר ללא מסלול נכנס!");
+                throw new AppExceptions.BadRequest("Update rejected: Target destination (" + existingRoute.getToD() + ") would be left without an incoming route!");
             }
         }
 
@@ -78,10 +83,11 @@ public class RouteService {
     @Transactional
     public void deleteRoute(int id) {
         Route route = routeRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("מסלול לא נמצא"));
+                .orElseThrow(() -> new AppExceptions.ResourceNotFound("Route not found with id: " + id));
 
+        // וולידציה: בדיקה שהמחיקה לא יוצרת "אי" מבודד במפה
         if (routeRepo.countByFromD(route.getFromD()) <= 1 || routeRepo.countByToD(route.getToD()) <= 1) {
-            throw new RuntimeException("מחיקה תגרום ליעד מבודד!");
+            throw new AppExceptions.BadRequest("Deletion failed: This would cause a destination to be isolated!");
         }
 
         routeRepo.deleteById(id);
