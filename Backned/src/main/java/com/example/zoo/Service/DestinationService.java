@@ -4,8 +4,9 @@ import com.example.zoo.DTO.DestinationDTO;
 import com.example.zoo.Entities.CategoryType;
 import com.example.zoo.Entities.Destination;
 import com.example.zoo.Entities.Point;
+import com.example.zoo.Exceptions.AppExceptions; // ייבוא קובץ החריגות המרכזי
 import com.example.zoo.Repositories.DestinationRepo;
-import org.springframework.context.annotation.Lazy; // הוספת הייבוא
+import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -25,19 +26,21 @@ public class DestinationService {
         this.navigationService = navigationService;
     }
 
-    // --- לקריאה (אורח ומנהל) ---
+    // --- READ ---
     public List<Destination> getAll() {
         List<Destination> list = destinationRepo.findAll();
-        if (list.isEmpty()) throw new RuntimeException("אין יעדים במערכת");
+        if (list.isEmpty()) {
+            throw new AppExceptions.ResourceNotFound("No destinations found in the system");
+        }
         return list;
     }
 
     public Destination getById(int id) {
         return destinationRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("יעד לא נמצא"));
+                .orElseThrow(() -> new AppExceptions.ResourceNotFound("Destination not found with id: " + id));
     }
 
-    // --- לכתיבה (מנהל) ---
+    // --- WRITE (Admin) ---
     @Transactional
     public Destination add(DestinationDTO dto) {
         Destination destination = Destination.builder()
@@ -45,7 +48,6 @@ public class DestinationService {
                 .picUrl(dto.getPicUrl())
                 .description(dto.getDescription())
                 .category(findCategory(dto.getCategory()))
-                // כאן אנחנו יוצרים את אובייקט ה-Point מה-x וה-y של ה-DTO
                 .location(new Point(dto.getX(), dto.getY()))
                 .build();
 
@@ -53,9 +55,10 @@ public class DestinationService {
         navigationService.refresh();
         return saved;
     }
+
     @Transactional
     public Destination update(int id, DestinationDTO dto) {
-        Destination existing = getById(id);
+        Destination existing = getById(id); // כבר זורק ResourceNotFound אם לא קיים
         existing.setName(dto.getName());
         existing.setPicUrl(dto.getPicUrl());
         existing.setDescription(dto.getDescription());
@@ -80,15 +83,14 @@ public class DestinationService {
         return Arrays.asList(CategoryType.values());
     }
 
-
-
     private CategoryType findCategory(String categoryStr) {
+        if (categoryStr == null || categoryStr.isEmpty()) {
+            throw new AppExceptions.BadRequest("Category name cannot be empty");
+        }
         try {
-            CategoryType type = CategoryType.valueOf(categoryStr.toUpperCase());
-            if (type == null) throw new RuntimeException("קטגוריה לא קיימת");
-            return type;
+            return CategoryType.valueOf(categoryStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("סוג קטגוריה לא תקין");
+            throw new AppExceptions.ResourceNotFound("Category type '" + categoryStr + "' is invalid");
         }
     }
 }
