@@ -5,8 +5,8 @@ import WebSocketTest from './Components/WebSocketTest'
 function App() {
   return (
     <div className="App">
-    {/* <ZooMap />  */}
-      <WebSocketTest></WebSocketTest>
+    <ZooMap /> 
+      {/* <WebSocketTest></WebSocketTest> */}
       </div>
   
   );

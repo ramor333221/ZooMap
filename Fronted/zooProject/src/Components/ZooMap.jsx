@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Client } from '@stomp/stompjs'; // ייבוא ה-Client של STOMP
 import { routeService } from '../Api/routeService';
 import { destinationService } from '../Api/destinationService';
 import { navigationService } from '../Api/navigationService';
@@ -11,7 +12,6 @@ import Map3DView from './Map3DView'
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
 
-
 const ZooMap = () => {
     const [routes, setRoutes] = useState([]);
     const [destinations, setDestinations] = useState([]);
@@ -21,12 +21,58 @@ const ZooMap = () => {
     const [selectedTargets, setSelectedTargets] = useState([]);
     const [optimizedRoute, setOptimizedRoute] = useState(null);
     const [isCalculating, setIsCalculating] = useState(false);
+    
+    // מצבים (State) חדשים לניהול ה-Socket והחיבור
+    const [stompClient, setStompClient] = useState(null);
+    const [connected, setConnected] = useState(false);
+
     const [chatMessages, setChatMessages] = useState([
         { id: 1, sender: 'ai', text: 'Welcome! Ask me anything about the park, animal habitats, or navigation routes.' }
     ]);
     const [inputMessage, setInputMessage] = useState('');
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [viewMode, setViewMode] = useState('2D');
+
+    // 1. אפקט לניהול חיבור ה-WebSocket והרשמה לקבלת מידע
+    useEffect(() => {
+        const client = new Client({
+            brokerURL: 'ws://localhost:8080/ws-endpoint',
+            webSocketFactory: () => new WebSocket('ws://localhost:8080/ws-endpoint'),
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
+
+            onConnect: (frame) => {
+                console.log('Chat Socket Connected Successfully!');
+                setConnected(true);
+                setStompClient(client);
+
+                // הרשמה לערוץ קבלת תשובות מה-AI
+                client.subscribe('/queue/reply', (message) => {
+                    const serverMessage = JSON.parse(message.body);
+                    
+                    // הוספת הודעת השרת לפאנל הצ'אט
+                    setChatMessages(prev => [...prev, {
+                        id: Date.now(),
+                        sender: 'ai',
+                        text: serverMessage.text // מניח שהשרת מחזיר אובייקט עם שדה text
+                    }]);
+                });
+            },
+            onDisconnect: () => {
+                setConnected(false);
+            },
+            onStompError: (frame) => {
+                console.error('STOMP Error:', frame);
+            }
+        });
+
+        client.activate();
+
+        // ניקוי וסגירת החיבור בעת פירוק הרכיב
+        return () => {
+            if (client) client.deactivate();
+        };
+    }, []);
 
     const toggleTarget = (id) => {
         if (optimizedRoute) setOptimizedRoute(null);
@@ -78,10 +124,30 @@ const ZooMap = () => {
         fetchMapData();
     }, []);
 
+    // 2. עדכון פונקציית שליחת ההודעה שתעבוד עם פורמט JSON ומול ה-Socket
     const handleSendChatMessage = () => {
         if (!inputMessage.trim()) return;
+
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // יצירת מבנה הנתונים המבוקש עבור ההודעה
+        const userMessage = {
+            sender: 'user',
+            text: inputMessage,
+            timestamp: currentTime
+        };
+
+        // עדכון מקומי מיידי של חלון הצ'אט בשביל חווית משתמש מהירה
         setChatMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: inputMessage }]);
         setInputMessage('');
+
+        // שליחת ההודעה לשרת כ-JSON רק במידה והחיבור קיים
+        if (stompClient && connected) {
+            stompClient.publish({
+                destination: '/app/chat', // נתיב הקצה בשרת לקבלת הודעות צ'אט
+                body: JSON.stringify(userMessage)
+            });
+        }
     };
 
     const handleLoginSuccess = () => {
@@ -164,66 +230,63 @@ const ZooMap = () => {
                 </aside>
 
                 {/* CENTER PANEL */}
-<div className="center-viewport-container">
-    {/* Floating View Controls */}
-    <div className="view-mode-controls">
-        <button 
-            className={`btn-view ${viewMode === '2D' ? 'active' : ''}`} 
-            onClick={() => setViewMode('2D')}
-        >
-            🗺️ 2D Map
-        </button>
-        <button 
-            className={`btn-view ${viewMode === '3D' ? 'active' : ''}`} 
-            onClick={() => setViewMode('3D')}
-        >
-            🧊 3D Simulation
-        </button>
-    </div>
+                <div className="center-viewport-container">
+                    <div className="view-mode-controls">
+                        <button className={`btn-view ${viewMode === '2D' ? 'active' : ''}`} onClick={() => setViewMode('2D')}>
+                            🗺️ 2D Map
+                        </button>
+                        <button className={`btn-view ${viewMode === '3D' ? 'active' : ''}`} onClick={() => setViewMode('3D')}>
+                            🧊 3D Simulation
+                        </button>
+                    </div>
 
-    <main className="zoo-map-main-area">
-        {viewMode === '2D' ? (
-            <div className="map-viewport">
-                <div className="map-terrain-base"></div>
-                <div className="map-background-image">
-                    <img src="./mapBackground.png" alt="Map Design" />
+                    <main className="zoo-map-main-area">
+                        {viewMode === '2D' ? (
+                            <div className="map-viewport">
+                                <div className="map-terrain-base"></div>
+                                <div className="map-background-image">
+                                    <img src="./mapBackground.png" alt="Map Design" />
+                                </div>
+                                <div className="map-grid-overlay"></div>
+
+                                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                    {routes.map(route => (
+                                        <RoutePath key={route.id} route={route} isDimmed={!!optimizedRoute} />
+                                    ))}
+                                    {optimizedRoute && optimizedRoute.pathEdges.map(edge => (
+                                        <RoutePath key={`opt-${edge.id}`} route={edge} isHighlighted={true} />
+                                    ))}
+                                    {isAdmin && isEditorActive && (
+                                        <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
+                                    )}
+                                </svg>
+
+                                <div className="map-markers-layer">
+                                    {destinations.map(dest => (
+                                        <DestinationPoint
+                                            key={dest.id}
+                                            destination={dest}
+                                            isEditorActive={isEditorActive}
+                                            isSelected={selectedTargets.includes(dest.id)}
+                                            onClick={() => !isEditorActive && toggleTarget(dest.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <Map3DView routes={routes} destinations={destinations} />
+                        )}
+                    </main>
                 </div>
-                <div className="map-grid-overlay"></div>
 
-                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    {routes.map(route => (
-                        <RoutePath key={route.id} route={route} isDimmed={!!optimizedRoute} />
-                    ))}
-                    {optimizedRoute && optimizedRoute.pathEdges.map(edge => (
-                        <RoutePath key={`opt-${edge.id}`} route={edge} isHighlighted={true} />
-                    ))}
-                    {isAdmin && isEditorActive && (
-                        <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
-                    )}
-                </svg>
-
-                <div className="map-markers-layer">
-                    {destinations.map(dest => (
-                        <DestinationPoint
-                            key={dest.id}
-                            destination={dest}
-                            isEditorActive={isEditorActive}
-                            isSelected={selectedTargets.includes(dest.id)}
-                            onClick={() => !isEditorActive && toggleTarget(dest.id)}
-                        />
-                    ))}
-                </div>
-            </div>
-        ) : (
-            <Map3DView routes={routes} destinations={destinations} />
-        )}
-    </main>
-</div>
-
-                {/* RIGHT PANEL */}
+                {/* RIGHT PANEL - מחובר כעת ללוגיקת ה-Socket ומציג סטטוס חיבור דינמי */}
                 <aside className="ai-chat-panel">
                     <div className="chat-header">
-                        <div className="ai-badge"><span className="pulse-dot"></span><span>AI Assistant</span></div>
+                        <div className="ai-badge">
+                            {/* הנקודה משנה צבע על בסיס סטטוס החיבור האמיתי */}
+                            <span className="pulse-dot" style={{ backgroundColor: connected ? '#4caf50' : '#f44336' }}></span>
+                            <span>AI Assistant {connected ? '' : '(Connecting...)'}</span>
+                        </div>
                     </div>
                     <div className="chat-history">
                         {chatMessages.map(msg => (
@@ -233,10 +296,21 @@ const ZooMap = () => {
                         ))}
                     </div>
                     <div className="chat-input-bar">
-                        <input type="text" placeholder="Ask about animals..." value={inputMessage} 
-                               onChange={(e) => setInputMessage(e.target.value)}
-                               onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()} />
-                        <button className="btn-chat-send" onClick={handleSendChatMessage}>⚡</button>
+                        <input 
+                            type="text" 
+                            placeholder={connected ? "Ask about animals..." : "Connecting to server..."} 
+                            value={inputMessage} 
+                            disabled={!connected} // חוסם הקלדה כשאין חיבור
+                            onChange={(e) => setInputMessage(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()} 
+                        />
+                        <button 
+                            className="btn-chat-send" 
+                            onClick={handleSendChatMessage} 
+                            disabled={!connected} // חוסם שליחה כשאין חיבור
+                        >
+                            ⚡
+                        </button>
                     </div>
                 </aside>
             </div>

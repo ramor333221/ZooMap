@@ -1,47 +1,27 @@
 package com.example.zoo.Controllers;
 
-import com.example.zoo.DTO.RouteResponseDTO;
-import com.example.zoo.Entities.Destination;
-import com.example.zoo.Entities.Route;
-import com.example.zoo.Service.DestinationService;
-import com.example.zoo.Service.NavigationService;
-import com.example.zoo.Service.RouteService;
+import com.example.zoo.DTO.ChatMessageDTO;
+import com.example.zoo.Service.ChatAiService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j; // תוספת עבור הלוגים
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.List;
-
 @Controller
 @RequiredArgsConstructor
-@Slf4j // אנוטציה שמייצרת את האובייקט log אוטומטית
+@Slf4j
 public class PublicWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatAiService chatAiService;
 
-    @MessageMapping("/hello")
-    public void sayHello(String clientMessage, SimpMessageHeaderAccessor headerAccessor) {
-        // לוג שמראה שההודעה התקבלה בהצלחה בשרת
-        log.info("=== WebSocket Message Received ===");
-        log.info("Destination endpoint: /hello");
-        log.info("Client raw message: {}", clientMessage);
-
-        String reply = "Hello client! You sent: " + clientMessage;
-
-        // Target response back to the specific session ID
+    @MessageMapping("/chat")
+    public void handleIncomingChat(@Payload ChatMessageDTO clientMessage, SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
-        log.info("Extracted Session ID: {}", sessionId);
-
-        // לוג לפני שליחת התשובה חזרה ללקוח
-        log.info("Sending reply to user queue [/queue/hello-reply]. Reply content: {}", reply);
-
-        // שליחה לערוץ כללי שכולם יכולים להקשיב לו
-        messagingTemplate.convertAndSend("/queue/hello-reply", reply);
-
-        log.info("=== Finished processing /hello ===");
+        ChatMessageDTO aiResponse = chatAiService.processChatMessage(sessionId, clientMessage);
+        messagingTemplate.convertAndSend("/queue/reply", aiResponse);
     }
 }
