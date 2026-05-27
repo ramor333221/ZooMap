@@ -1,6 +1,5 @@
 import React from 'react';
 import ZooMap from './Components/ZooMap';
-import WebSocketTest from './Components/WebSocketTest'
 
 function App() {
   return (

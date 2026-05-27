@@ -17,8 +17,10 @@ import java.util.List;
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    // 1. הגדרת המשתנה שחסר לך
     private final JwtUtil jwtUtil;
 
+    // 2. הזרקה שלו דרך ה-Constructor
     public SecurityConfig(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
@@ -28,13 +30,32 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder(10);
     }
 
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .cors().and()
+                .csrf().disable()
+                .headers().frameOptions().disable().and()
+
+                .authorizeRequests()
+                // החרגת ה-WebSocket והנתיבים הפנימיים
+                .antMatchers("/ws-endpoint/**").permitAll()
+                .antMatchers("/topic/**", "/queue/**", "/user/**").permitAll()
+
+                .antMatchers("/api/v1/admin/login").permitAll()
+                .antMatchers("/h2-console/**").permitAll()
+                .antMatchers("/api/v1/public/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
+
+                // 3. עכשיו jwtUtil כבר לא יהיה אדום כי הוא מוכר למחלקה
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // שינוי ל-OriginPatterns פותר את בעיית ה-Credentials מול הכוכבית
         configuration.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
@@ -42,26 +63,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-                .cors().and()
-                .csrf().disable()
-                // שורה זו נחוצה אם אתה משתמש ב-H2 Console כדי למנוע חסימת פריימים
-                .headers().frameOptions().disable().and()
-
-                .authorizeRequests()
-                // תיקון קריטי: החרגת נקודת הקצה של ה-WebSocket מאימות JWT
-                .antMatchers("/ws-endpoint/**").permitAll()
-
-                .antMatchers("/api/v1/admin/login").permitAll()
-                .antMatchers("/h2-console/**").permitAll()
-                .antMatchers("/api/v1/public/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                // הפילטר של ה-JWT ירוץ רק על נתיבים שדורשים אימות
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
     }
 }

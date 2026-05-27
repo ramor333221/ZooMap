@@ -389,6 +389,22 @@ body, html {
       }
     }
 
+    strong {
+    font-weight: bold;
+    color: #111; /* הופך את הכותרות לבולטות יותר */
+  }
+
+  ul, ol {
+    margin: 5px 0;
+    padding-left: 20px; /* נותן מרווח יפה לבולטים */
+    list-style-type: disc;
+  }
+
+  li {
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
     .msg-bubble {
       max-width: 85%;
       border: 1px solid;

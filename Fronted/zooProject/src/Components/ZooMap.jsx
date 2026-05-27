@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Client } from '@stomp/stompjs'; // ייבוא ה-Client של STOMP
 import { routeService } from '../Api/routeService';
 import { destinationService } from '../Api/destinationService';
 import { navigationService } from '../Api/navigationService';
@@ -8,7 +7,8 @@ import DestinationPoint from './DestinationPoint';
 import DestinationSelector from './DestinationSelector';
 import MapEditorManager from './MapEditorManager'; 
 import Login from './Login'; 
-import Map3DView from './Map3DView'
+import Map3DView from './Map3DView';
+import ChatApp from './Chat/ChatApp'// 1. ייבוא קומפוננטת הצ'אט החדשה
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
 
@@ -21,58 +21,10 @@ const ZooMap = () => {
     const [selectedTargets, setSelectedTargets] = useState([]);
     const [optimizedRoute, setOptimizedRoute] = useState(null);
     const [isCalculating, setIsCalculating] = useState(false);
-    
-    // מצבים (State) חדשים לניהול ה-Socket והחיבור
-    const [stompClient, setStompClient] = useState(null);
-    const [connected, setConnected] = useState(false);
-
-    const [chatMessages, setChatMessages] = useState([
-        { id: 1, sender: 'ai', text: 'Welcome! Ask me anything about the park, animal habitats, or navigation routes.' }
-    ]);
-    const [inputMessage, setInputMessage] = useState('');
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [viewMode, setViewMode] = useState('2D');
 
-    // 1. אפקט לניהול חיבור ה-WebSocket והרשמה לקבלת מידע
-    useEffect(() => {
-        const client = new Client({
-            brokerURL: 'ws://localhost:8080/ws-endpoint',
-            webSocketFactory: () => new WebSocket('ws://localhost:8080/ws-endpoint'),
-            heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000,
-
-            onConnect: (frame) => {
-                console.log('Chat Socket Connected Successfully!');
-                setConnected(true);
-                setStompClient(client);
-
-                // הרשמה לערוץ קבלת תשובות מה-AI
-                client.subscribe('/queue/reply', (message) => {
-                    const serverMessage = JSON.parse(message.body);
-                    
-                    // הוספת הודעת השרת לפאנל הצ'אט
-                    setChatMessages(prev => [...prev, {
-                        id: Date.now(),
-                        sender: 'ai',
-                        text: serverMessage.text // מניח שהשרת מחזיר אובייקט עם שדה text
-                    }]);
-                });
-            },
-            onDisconnect: () => {
-                setConnected(false);
-            },
-            onStompError: (frame) => {
-                console.error('STOMP Error:', frame);
-            }
-        });
-
-        client.activate();
-
-        // ניקוי וסגירת החיבור בעת פירוק הרכיב
-        return () => {
-            if (client) client.deactivate();
-        };
-    }, []);
+    // הסרנו מכאן את ה-useEffect הישן של ה-Client ואת ה-states של ה-chatMessages
 
     const toggleTarget = (id) => {
         if (optimizedRoute) setOptimizedRoute(null);
@@ -123,32 +75,6 @@ const ZooMap = () => {
         checkAdminAuth();
         fetchMapData();
     }, []);
-
-    // 2. עדכון פונקציית שליחת ההודעה שתעבוד עם פורמט JSON ומול ה-Socket
-    const handleSendChatMessage = () => {
-        if (!inputMessage.trim()) return;
-
-        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        // יצירת מבנה הנתונים המבוקש עבור ההודעה
-        const userMessage = {
-            sender: 'user',
-            text: inputMessage,
-            timestamp: currentTime
-        };
-
-        // עדכון מקומי מיידי של חלון הצ'אט בשביל חווית משתמש מהירה
-        setChatMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: inputMessage }]);
-        setInputMessage('');
-
-        // שליחת ההודעה לשרת כ-JSON רק במידה והחיבור קיים
-        if (stompClient && connected) {
-            stompClient.publish({
-                destination: '/app/chat', // נתיב הקצה בשרת לקבלת הודעות צ'אט
-                body: JSON.stringify(userMessage)
-            });
-        }
-    };
 
     const handleLoginSuccess = () => {
         checkAdminAuth();
@@ -279,40 +205,9 @@ const ZooMap = () => {
                     </main>
                 </div>
 
-                {/* RIGHT PANEL - מחובר כעת ללוגיקת ה-Socket ומציג סטטוס חיבור דינמי */}
-                <aside className="ai-chat-panel">
-                    <div className="chat-header">
-                        <div className="ai-badge">
-                            {/* הנקודה משנה צבע על בסיס סטטוס החיבור האמיתי */}
-                            <span className="pulse-dot" style={{ backgroundColor: connected ? '#4caf50' : '#f44336' }}></span>
-                            <span>AI Assistant {connected ? '' : '(Connecting...)'}</span>
-                        </div>
-                    </div>
-                    <div className="chat-history">
-                        {chatMessages.map(msg => (
-                            <div key={msg.id} className={`chat-message ${msg.sender}`}>
-                                <div className="msg-bubble"><p>{msg.text}</p></div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="chat-input-bar">
-                        <input 
-                            type="text" 
-                            placeholder={connected ? "Ask about animals..." : "Connecting to server..."} 
-                            value={inputMessage} 
-                            disabled={!connected} // חוסם הקלדה כשאין חיבור
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()} 
-                        />
-                        <button 
-                            className="btn-chat-send" 
-                            onClick={handleSendChatMessage} 
-                            disabled={!connected} // חוסם שליחה כשאין חיבור
-                        >
-                            ⚡
-                        </button>
-                    </div>
-                </aside>
+                {/* RIGHT PANEL - 2. קריאה ישירה לקומפוננטת הצ'אט החדשה והמתוקנת */}
+                <ChatApp />
+
             </div>
 
             {showLoginModal && (

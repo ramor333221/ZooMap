@@ -1,96 +1,134 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
-import MessageList from '../MessageList';
-import MessageInput from '../MessageInput';
+import ReactMarkdown from 'react-markdown';
 
 const ChatApp = () => {
-    const [stompClient, setStompClient] = useState(null);
     const [connected, setConnected] = useState(false);
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState([
+        { id: 1, sender: 'ai', text: 'Welcome! Ask me anything about the park, animal habitats, or navigation routes.' }
+    ]);
+    const [inputMessage, setInputMessage] = useState('');
+    const stompClientRef = useRef(null); 
+
+    // יצירת מזהה ייחודי קבוע לחלון הצ'אט הזה (UUID)
+    const [chatSessionId] = useState(() => crypto.randomUUID());
 
     useEffect(() => {
         const client = new Client({
-            brokerURL: 'ws://localhost:8080/ws-endpoint',
-            webSocketFactory: () => new WebSocket('ws://localhost:8080/ws-endpoint'),
+            // מעודכן ל-IP של המחשב המארח ברשת שלך
+            brokerURL: 'ws://192.168.1.167:8080/ws-endpoint',
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
-
-            onConnect: (frame) => {
-                console.log('Connected!');
+            
+            onConnect: () => {
+                console.log('✅ Chat Socket Connected! Session ID:', chatSessionId);
                 setConnected(true);
-                setStompClient(client);
-
-                client.subscribe('/queue/reply', (message) => {
-                    const serverMessage = JSON.parse(message.body);
-                    setMessages((prev) => [...prev, serverMessage]);
+                
+                // רישום לערוץ הדינמי הפרטי של המשתמש הנוכחי
+                client.subscribe(`/topic/reply-${chatSessionId}`, (message) => {
+                    console.log("📬 הודעה חדשה הגיעה מה-AI:", message.body);
+                    try {
+                        const serverMessage = JSON.parse(message.body);
+                        setMessages((prev) => [...prev, {
+                            id: Date.now(),
+                            sender: 'ai',
+                            text: serverMessage.text
+                        }]);
+                    } catch (error) {
+                        console.error("Error parsing JSON:", error);
+                    }
                 });
             },
             onDisconnect: () => {
+                console.log('❌ Chat Socket Disconnected');
                 setConnected(false);
+            },
+            onStompError: (frame) => {
+                console.error('STOMP Error:', frame);
             }
         });
 
         client.activate();
+        stompClientRef.current = client;
 
         return () => {
-            if (client) client.deactivate();
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+            }
         };
-    }, []);
+    }, [chatSessionId]); 
 
-    const handleSendMessage = (text) => {
-        if (!stompClient || !connected) return;
+    const handleSendChatMessage = () => {
+        if (!inputMessage.trim()) return;
+
+        const activeClient = stompClientRef.current;
+        if (!activeClient || !activeClient.connected) {
+            console.warn("Cannot send message, socket not connected.");
+            return;
+        }
 
         const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+        
+        // בניית האובייקט כולל ה-chatSessionId הייחודי
         const userMessage = {
             sender: 'user',
-            text: text,
-            timestamp: currentTime
+            text: inputMessage,
+            timestamp: currentTime,
+            chatSessionId: chatSessionId
         };
 
-        setMessages((prev) => [...prev, userMessage]);
+        // עדכון מקומי מיידי במסך של המשתמש בשביל חווית שימוש מהירה
+        setMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: inputMessage }]);
+        setInputMessage('');
 
-        stompClient.publish({
+        // שליחה ל-Controller של Spring Boot
+        activeClient.publish({
             destination: '/app/chat',
             body: JSON.stringify(userMessage)
         });
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            right: 0,
-            width: '350px',       // רוחב הפאנל הימני
-            height: '100vh',      // גובה מלא של המסך
-            backgroundColor: '#ffffff',
-            boxShadow: '-2px 0 5px rgba(0,0,0,0.1)', // צל שיוצר הפרדה מהמסך הראשי
-            display: 'flex',
-            flexDirection: 'column',
-            fontFamily: 'sans-serif',
-            boxSizing: 'border-box',
-            zIndex: 1000,         // מוודא שהפאנל מעל אלמנטים אחרים
-            borderLeft: '1px solid #e0e0e0',
-            direction: 'rtl'      // כיוון הממשק מימין לשמאל
-        }}>
-            {/* כותרת הפאנל */}
-            <div style={{ padding: '15px', borderBottom: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', color: '#333' }}>צ'אט AI</h3>
-                <span style={{ fontSize: '12px', color: connected ? 'green' : 'red' }}>
-                    ● {connected ? 'מחובר' : 'מנותק'}
-                </span>
+        <aside className="ai-chat-panel">
+            <div className="chat-header">
+                <div className="ai-badge">
+                    <span className="pulse-dot" style={{ backgroundColor: connected ? '#4caf50' : '#f44336' }}></span>
+                    <span>AI Assistant {connected ? '' : '(Connecting...)'}</span>
+                </div>
             </div>
             
-            {/* אזור ההודעות - גמיש ותופס את רוב הגובה */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
-                <MessageList messages={messages} />
+            <div className="chat-history">
+                {messages.map(msg => (
+                    <div key={msg.id} className={`chat-message ${msg.sender}`}>
+                        <div className="msg-bubble">
+                            {msg.sender === 'ai' ? (
+                                <ReactMarkdown>{msg.text}</ReactMarkdown>
+                            ) : (
+                                <p>{msg.text}</p>
+                            )}
+                        </div>
+                    </div>
+                ))}
             </div>
             
-            {/* אזור קלט קבוע בתחתית הפאנל */}
-            <div style={{ padding: '10px', borderTop: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
-                <MessageInput onSendMessage={handleSendMessage} disabled={!connected} />
+            <div className="chat-input-bar">
+                <input 
+                    type="text" 
+                    placeholder={connected ? "Ask about animals..." : "Connecting to server..."} 
+                    value={inputMessage} 
+                    disabled={!connected} 
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()} 
+                />
+                <button 
+                    className="btn-chat-send" 
+                    onClick={handleSendChatMessage} 
+                    disabled={!connected}
+                >
+                    ⚡
+                </button>
             </div>
-        </div>
+        </aside>
     );
 };
 
