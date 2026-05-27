@@ -7,8 +7,8 @@ import DestinationPoint from './DestinationPoint';
 import DestinationSelector from './DestinationSelector';
 import MapEditorManager from './MapEditorManager'; 
 import Login from './Login'; 
-import Map3DView from './Map3DView';
-import ChatApp from './Chat/ChatApp'// 1. ייבוא קומפוננטת הצ'אט החדשה
+import Map3DView from './3DView/Map3DView';
+import ChatApp from './Chat/ChatApp'
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
 
@@ -177,10 +177,11 @@ const ZooMap = () => {
 
                                 <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
                                     {routes.map(route => (
-                                        <RoutePath key={route.id} route={route} isDimmed={!!optimizedRoute} />
+                                        <RoutePath key={`static-${route.id}`} route={route} isDimmed={!!optimizedRoute} />
                                     ))}
-                                    {optimizedRoute && optimizedRoute.pathEdges.map(edge => (
-                                        <RoutePath key={`opt-${edge.id}`} route={edge} isHighlighted={true} />
+                                    {/* שימוש באינדקס במידת הצורך למניעת התנגשות מפתחות */}
+                                    {optimizedRoute && optimizedRoute.pathEdges.map((edge, index) => (
+                                        <RoutePath key={`opt-${index}-${edge.id || 'edge'}`} route={edge} isHighlighted={true} />
                                     ))}
                                     {isAdmin && isEditorActive && (
                                         <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
@@ -200,7 +201,11 @@ const ZooMap = () => {
                                 </div>
                             </div>
                         ) : (
-                            <Map3DView routes={routes} destinations={destinations} />
+                            <Map3DView 
+                            routes={routes} 
+                            destinations={destinations} 
+                            optimizedRoute={optimizedRoute} 
+                        />
                         )}
                     </main>
                 </div>

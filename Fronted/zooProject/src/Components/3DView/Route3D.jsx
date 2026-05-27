@@ -1,33 +1,34 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
-const Route3D = ({ data, isHighlighted, isDimmed }) => {
-  const pointsData = data.bodyPoints || [];
-  
+const Route3D = ({ data, isHighlighted, isDimmed, color = "#f59e0b" }) => {
+  const pointsData = useMemo(() => {
+    // קריאת נקודות מתוך bodyPoints (מתאים גם למסלול רגיל וגם ל-edge של מסלול אופטימלי)
+    const rawPoints = data.bodyPoints || [];
+    return rawPoints.filter(p => p && typeof p.x !== 'undefined' && typeof p.y !== 'undefined');
+  }, [data]);
+
   const { geometry, gravelPositions } = useMemo(() => {
     if (pointsData.length < 2) return { geometry: null, gravelPositions: [] };
-    
+
     const points = pointsData.map(p => new THREE.Vector3(
       parseFloat(p.x) - 50,
       0,
       parseFloat(p.y) - 50
     ));
-    
+
     const curve = new THREE.CatmullRomCurve3(points);
     const geo = new THREE.TubeGeometry(curve, 128, 1.4, 8, false);
-    
+
     const gravel = [];
-    const sampling = 150; // High density for gravel feel
-    
+    const sampling = 150;
     for (let i = 0; i <= sampling; i++) {
       const t = i / sampling;
       const point = curve.getPoint(t);
       const tangent = curve.getTangent(t);
       const normal = new THREE.Vector3(0, 1, 0).cross(tangent).normalize();
-      
-      // Create a "frame" on both sides
+
       [-1.6, 1.6].forEach(sideOffset => {
-        // Add 2-3 tiny pebbles per sampling point for thickness
         for(let j = 0; j < 2; j++) {
           gravel.push({
             pos: [
@@ -41,7 +42,6 @@ const Route3D = ({ data, isHighlighted, isDimmed }) => {
         }
       });
     }
-    
     return { geometry: geo, gravelPositions: gravel };
   }, [pointsData]);
 
@@ -49,17 +49,17 @@ const Route3D = ({ data, isHighlighted, isDimmed }) => {
 
   return (
     <group>
-      {/* Flattened Walkway */}
       <mesh geometry={geometry} receiveShadow scale={[1, 0.01, 1]} position={[0, 0.05, 0]}>
         <meshStandardMaterial 
-          color={isHighlighted ? "#d1d5db" : "#7c6c5a"} 
+          color={isHighlighted ? color : "#7c6c5a"} 
           roughness={1} 
           transparent 
-          opacity={isDimmed ? 0.4 : 1} 
+          opacity={isDimmed ? 0.4 : 1}
+          emissive={isHighlighted ? color : "#000"}
+          emissiveIntensity={isHighlighted ? 0.5 : 0}
         />
       </mesh>
 
-      {/* Gravel Frame - Instanced-like rendering of small stones */}
       {gravelPositions.map((stone, idx) => (
         <mesh key={idx} position={stone.pos} scale={stone.scale} castShadow>
           <icosahedronGeometry args={[1, 0]} />

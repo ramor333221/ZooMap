@@ -10,8 +10,10 @@ const ChatApp = () => {
     const [inputMessage, setInputMessage] = useState('');
     const stompClientRef = useRef(null); 
 
-    // יצירת מזהה ייחודי קבוע לחלון הצ'אט הזה (UUID)
-    const [chatSessionId] = useState(() => crypto.randomUUID());
+    const [chatSessionId] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('group') || 'default-group'; 
+    });
 
     useEffect(() => {
         const client = new Client({
@@ -25,7 +27,7 @@ const ChatApp = () => {
                 setConnected(true);
                 
                 // רישום לערוץ הדינמי הפרטי של המשתמש הנוכחי
-                client.subscribe(`/topic/reply-${chatSessionId}`, (message) => {
+                client.subscribe('/user/queue/reply', (message) => {
                     console.log("📬 הודעה חדשה הגיעה מה-AI:", message.body);
                     try {
                         const serverMessage = JSON.parse(message.body);
