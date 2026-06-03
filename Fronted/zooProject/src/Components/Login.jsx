@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { authService } from '../Api/authService'; 
 import '../Scss/LoginModal.scss';
+import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
 
-// Destructure the callbacks coming from ZooMap.jsx
 const Login = ({ onLoginSuccess, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
@@ -23,18 +23,18 @@ const Login = ({ onLoginSuccess, onClose }) => {
     try {
       const response = await authService.login(formData);
       
-      // Save the token returned by your API
       const token = response.token || response.data?.token;
       if (token) {
         localStorage.setItem('auth_token', token);
       }
       
-      // Trigger success callback to close modal and start editor
       if (onLoginSuccess) {
         onLoginSuccess();
       }
     } catch (err) {
-      setError('Invalid username or password');
+      // Using the error message from the backend if available, otherwise fallback
+      const errorMessage = err.response?.data?.message || "Invalid username or password";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,6 @@ const Login = ({ onLoginSuccess, onClose }) => {
 
   return (
     <div className="login-container-layout">
-      {/* Optional internal close button if desired, falls back to parent onClose */}
       <form onSubmit={handleSubmit} className="futuristic-login-form">
         <div className="form-header">
           <span className="security-icon">🔐</span>
@@ -50,14 +49,16 @@ const Login = ({ onLoginSuccess, onClose }) => {
           <p className="form-subtitle">Provide secure credentials to enter map override mode</p>
         </div>
 
+        {/* Replaced manual error div with StatusDisplay */}
         {error && (
-          <div className="login-error-message">
-            <span className="warning-symbol">⚠️</span>
-            <p>{error}</p>
+          <div style={{ marginBottom: '20px' }}>
+            <StatusDisplay 
+              type="error" 
+              message={error} 
+            />
           </div>
         )}
         
-        {/* Adjusted class names to perfectly map to your LoginModal.scss */}
         <div className="form-group">
           <label>Username</label>
           <input 
@@ -97,5 +98,4 @@ const Login = ({ onLoginSuccess, onClose }) => {
   );
 };
 
-// Exporting as "Login" to match your: import Login from './Login' in ZooMap.jsx
 export default Login;

@@ -1,47 +1,45 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
 
-const RoutePath = ({ route, isHighlighted, isDimmed }) => {
-  if (!route.bodyPoints || route.bodyPoints.length < 2) return null;
+const RoutePath = ({ route, isHighlighted, isDimmed, isOptimized = false }) => {
+  if (!route || !route.bodyPoints || route.bodyPoints.length < 2) {
+    return <StatusDisplay type="error" message="Route path data is missing or invalid." />;
+  }
 
   const pathData = route.bodyPoints
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
     .join(' ');
 
-  // Classic Map Palette
-  const baseBeige = "#F5F5DC";      // Light Cream/Beige
-  const borderBeige = "#D2B48C";    // Darker Tan for the "road" edges
-  const highlightColor = "#E6C9A8"; // Warm highlight
+  // Styling configuration
+  const baseBeige = "#F5F5DC";
+  const borderBeige = "#D2B48C";
+  const highlightColor = "#E6C9A8";
+  
+  // If optimized, use a distinct color, otherwise use standard styling
+  const strokeColor = isOptimized ? "#c09063ff" : (isHighlighted ? highlightColor : borderBeige);
 
   return (
-    <g className={`map-path-group ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''}`}>
-      
-      {/* 1. The Outer "Border" of the route - makes it look like a real road */}
+    <g className={`map-path-group ${isOptimized ? 'optimized' : ''} ${isHighlighted ? 'highlighted' : ''} ${isDimmed ? 'dimmed' : ''}`}>
       <path
         d={pathData}
         fill="none"
-        stroke={isHighlighted ? highlightColor : borderBeige}
-        strokeWidth={isHighlighted ? "4" : "3"} 
+        stroke={strokeColor}
+        strokeWidth={isOptimized ? "5" : (isHighlighted ? "4" : "3")}
         strokeLinecap="round"
         strokeLinejoin="round"
         opacity={isDimmed ? 0.2 : 0.8}
         style={{ transition: 'all 0.4s ease' }}
       />
-
-      {/* 2. The Main Route Body (Inner Path) */}
       <motion.path
         d={pathData}
         fill="none"
-        stroke={baseBeige}
-        strokeWidth={isHighlighted ? "2.5" : "2"}
-        // Using "round" linecap and join is crucial for the "one route" look
+        stroke={isOptimized ? "#d8c5b0ff" : baseBeige}
+        strokeWidth={isOptimized ? "3" : (isHighlighted ? "2.5" : "2")}
         strokeLinecap="round"
         strokeLinejoin="round"
-        initial={isHighlighted ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 1 }}
-        animate={{ 
-            pathLength: 1, 
-            opacity: isDimmed ? 0.3 : 1 
-        }}
+        initial={isHighlighted || isOptimized ? { pathLength: 0, opacity: 0 } : { pathLength: 1, opacity: 1 }}
+        animate={{ pathLength: 1, opacity: isDimmed ? 0.3 : 1 }}
         transition={{ duration: 1.5, ease: "linear" }}
       />
     </g>

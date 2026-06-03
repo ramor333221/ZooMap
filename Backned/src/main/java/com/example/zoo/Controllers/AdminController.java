@@ -13,9 +13,10 @@ import com.example.zoo.Service.AuthService;
 import com.example.zoo.Service.DestinationService;
 import com.example.zoo.Service.RouteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
@@ -50,15 +51,22 @@ public class AdminController {
         );
     }
 
-    @PostMapping("/destinations")
-    public ResponseEntity<Destination> addDestination(@RequestBody DestinationDTO dto) {
-        return ResponseEntity.ok(destinationService.add(dto));
+    @PostMapping(value = "/destinations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Destination> addDestination(
+            @RequestPart("destination") DestinationDTO dto,
+            @RequestPart(value = "file", required = true) MultipartFile file) {
+        {
+            return ResponseEntity.ok(destinationService.addWithImage(dto, file));
+        }
     }
 
-    @PutMapping("/destinations/{id}")
-    public ResponseEntity<Destination> updateDestination(@PathVariable int id,
-                                                         @RequestBody DestinationDTO dto) {
-        return ResponseEntity.ok(destinationService.update(id, dto));
+
+    @PutMapping(value = "/destinations/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Destination> updateDestination(
+            @PathVariable int id,
+            @RequestPart("destination") DestinationDTO dto,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        return ResponseEntity.ok(destinationService.update(id, dto, file));
     }
 
     @DeleteMapping("/destinations/{id}")

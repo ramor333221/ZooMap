@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { routeService } from '../Api/routeService';
 import { destinationService } from '../Api/destinationService';
 import { navigationService } from '../Api/navigationService';
+import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
 import RoutePath from './RoutePath';
 import DestinationPoint from './DestinationPoint';
 import DestinationSelector from './DestinationSelector';
 import MapEditorManager from './MapEditorManager'; 
 import Login from './Login'; 
 import Map3DView from './3DView/Map3DView';
-import ChatApp from './Chat/ChatApp'
+import ChatApp from './Chat/ChatApp';
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
 
@@ -23,8 +24,16 @@ const ZooMap = () => {
     const [isCalculating, setIsCalculating] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [viewMode, setViewMode] = useState('2D');
+    const [appStatus, setAppStatus] = useState(null); 
 
-    // הסרנו מכאן את ה-useEffect הישן של ה-Client ואת ה-states של ה-chatMessages
+    // --- State Reset Logic for Admin Mode ---
+    const toggleEditor = () => {
+        if (!isEditorActive) {
+            setSelectedTargets([]);
+            setOptimizedRoute(null);
+        }
+        setIsEditorActive(!isEditorActive);
+    };
 
     const toggleTarget = (id) => {
         if (optimizedRoute) setOptimizedRoute(null);
@@ -34,19 +43,25 @@ const ZooMap = () => {
     };
 
     const handleCalculateRoute = async () => {
-        if (selectedTargets.length < 2) return;
+        if (selectedTargets.length < 2) {
+            setAppStatus({ type: 'warning', message: 'Please select at least 2 destinations.', isFatal: false });
+            return;
+        }
         setIsCalculating(true);
+        setAppStatus(null);
         try {
             const data = await navigationService.getOptimizedRoute(selectedTargets);
             setOptimizedRoute(data);
         } catch (err) {
-            alert("Unable to calculate route.");
+            setAppStatus({ type: 'error', message: 'Unable to calculate route. Server unreachable.', isFatal: false });
         } finally {
             setIsCalculating(false);
         }
     };
 
     const fetchMapData = async () => {
+        setLoading(true);
+        setAppStatus(null);
         try {
             const [rData, dData] = await Promise.all([
                 routeService.getAllRoutes(),
@@ -55,7 +70,7 @@ const ZooMap = () => {
             setRoutes(rData);
             setDestinations(dData);
         } catch (err) {
-            console.error("Fetch error:", err);
+            setAppStatus({ type: 'error', message: 'Failed to load map data. Server unreachable.', isFatal: true });
         } finally {
             setLoading(false);
         }
@@ -89,13 +104,25 @@ const ZooMap = () => {
         setIsEditorActive(false);
     };
 
-    if (loading) return <div className="map-loader-container"><div className="futuristic-spinner"></div></div>;
+    if (loading && !appStatus) {
+        return (
+            <div className="map-loader-container" style={{ backgroundColor: 'black', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div className="futuristic-spinner"></div>
+            </div>
+        );
+    }
+
+    if (appStatus?.isFatal) {
+        return (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'black' }}>
+                <StatusDisplay type="error" message={appStatus.message} onRetry={fetchMapData} />
+            </div>
+        );
+    }
 
     return (
         <>
             <div className={`zoo-app-layout ${isEditorActive ? 'admin-editor-active' : ''}`}>
-                
-                {/* LEFT PANEL */}
                 <aside className="app-sidebar">
                     <div className="sidebar-scrollable-container">
                         <div className="brand-header">
@@ -106,7 +133,7 @@ const ZooMap = () => {
                             </div>
                         </div>
 
-                        {!isEditorActive ? (
+                       {!isEditorActive ? (
                             <DestinationSelector
                                 destinations={destinations}
                                 selectedTargets={selectedTargets}
@@ -115,10 +142,7 @@ const ZooMap = () => {
                                 isCalculating={isCalculating}
                             />
                         ) : (
-                            <div className="editor-sidebar-notice">
-                                <h3>Editor Panel</h3>
-                                <p>Interact with map vectors to update configurations.</p>
-                            </div>
+                            null
                         )}
 
                         {optimizedRoute && (
@@ -142,7 +166,7 @@ const ZooMap = () => {
                     <div className="sidebar-footer">
                         {isAdmin ? (
                             <div className="admin-controls-stack">
-                                <button className={`btn-admin-panel ${isEditorActive ? 'active' : ''}`} onClick={() => setIsEditorActive(!isEditorActive)}>
+                                <button className={`btn-admin-panel ${isEditorActive ? 'active' : ''}`} onClick={toggleEditor}>
                                     🛡️ {isEditorActive ? "Exit Editor" : "Admin Panel"}
                                 </button>
                                 <button className="btn-logout" onClick={handleLogout}>Sign Out</button>
@@ -155,33 +179,29 @@ const ZooMap = () => {
                     </div>
                 </aside>
 
-                {/* CENTER PANEL */}
                 <div className="center-viewport-container">
+                    {appStatus && !appStatus.isFatal && (
+                        <StatusDisplay type={appStatus.type} message={appStatus.message} onRetry={appStatus.type === 'error' ? fetchMapData : null} />
+                    )}
+
                     <div className="view-mode-controls">
-                        <button className={`btn-view ${viewMode === '2D' ? 'active' : ''}`} onClick={() => setViewMode('2D')}>
-                            🗺️ 2D Map
-                        </button>
-                        <button className={`btn-view ${viewMode === '3D' ? 'active' : ''}`} onClick={() => setViewMode('3D')}>
-                            🧊 3D Simulation
-                        </button>
+                        <button className={`btn-view ${viewMode === '2D' ? 'active' : ''}`} onClick={() => setViewMode('2D')}>🗺️ 2D Map</button>
+                        <button className={`btn-view ${viewMode === '3D' ? 'active' : ''}`} onClick={() => setViewMode('3D')}>🧊 3D Simulation</button>
                     </div>
 
                     <main className="zoo-map-main-area">
                         {viewMode === '2D' ? (
                             <div className="map-viewport">
                                 <div className="map-terrain-base"></div>
-                                <div className="map-background-image">
-                                    <img src="./mapBackground.png" alt="Map Design" />
-                                </div>
+                                <div className="map-background-image"><img src="./mapBackground.png" alt="Map Design" /></div>
                                 <div className="map-grid-overlay"></div>
 
                                 <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
                                     {routes.map(route => (
                                         <RoutePath key={`static-${route.id}`} route={route} isDimmed={!!optimizedRoute} />
                                     ))}
-                                    {/* שימוש באינדקס במידת הצורך למניעת התנגשות מפתחות */}
                                     {optimizedRoute && optimizedRoute.pathEdges.map((edge, index) => (
-                                        <RoutePath key={`opt-${index}-${edge.id || 'edge'}`} route={edge} isHighlighted={true} />
+                                        <RoutePath key={`opt-${index}-${edge.id || 'edge'}`} route={edge} isOptimized={true} />
                                     ))}
                                     {isAdmin && isEditorActive && (
                                         <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
@@ -201,18 +221,11 @@ const ZooMap = () => {
                                 </div>
                             </div>
                         ) : (
-                            <Map3DView 
-                            routes={routes} 
-                            destinations={destinations} 
-                            optimizedRoute={optimizedRoute} 
-                        />
+                            <Map3DView routes={routes} destinations={destinations} optimizedRoute={optimizedRoute} />
                         )}
                     </main>
                 </div>
-
-                {/* RIGHT PANEL - 2. קריאה ישירה לקומפוננטת הצ'אט החדשה והמתוקנת */}
                 <ChatApp />
-
             </div>
 
             {showLoginModal && (

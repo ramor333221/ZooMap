@@ -1,8 +1,9 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Sky, Cloud, ContactShadows, BakeShadows } from '@react-three/drei';
 import Destination3D from './Destination3D';
 import Route3D from './Route3D';
+import StatusDisplay from '../ErrorDisplay/StatusDisplay';
 
 const NatureElement = ({ position }) => (
   <group position={position} scale={0.7 + Math.random()}>
@@ -18,9 +19,27 @@ const NatureElement = ({ position }) => (
 );
 
 const Map3DView = ({ routes, destinations, optimizedRoute }) => {
+  const [viewError, setViewError] = useState(false);
+
   return (
-    <div style={{ width: '100%', height: '100vh', background: '#7cd1f9' }}>
-      <Canvas shadows gl={{ antialias: true, toneMappingExposure: 1.4 }}>
+    <div style={{ width: '100%', height: '100vh', background: '#7cd1f9', position: 'relative' }}>
+      
+      {viewError && (
+        <div style={{ position: 'absolute', top: '20px', left: '20px', right: '20px', zIndex: 10 }}>
+          <StatusDisplay 
+            type="error" 
+            message="3D Engine encountered an error. Please try refreshing or checking your hardware acceleration." 
+          />
+        </div>
+      )}
+
+      <Canvas 
+        shadows 
+        gl={{ antialias: true, toneMappingExposure: 1.4 }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', () => setViewError(true));
+        }}
+      >
         <PerspectiveCamera makeDefault position={[55, 55, 55]} fov={35} />
         <OrbitControls enableDamping maxPolarAngle={Math.PI / 2.2} minDistance={15} maxDistance={150} />
         

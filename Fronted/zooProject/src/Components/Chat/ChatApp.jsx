@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import ReactMarkdown from 'react-markdown';
+import { WS_URL } from '../../Api/apiClient';
 
 const ChatApp = () => {
     const [connected, setConnected] = useState(false);
@@ -17,8 +18,7 @@ const ChatApp = () => {
 
     useEffect(() => {
         const client = new Client({
-            // מעודכן ל-IP של המחשב המארח ברשת שלך
-            brokerURL: 'ws://192.168.1.167:8080/ws-endpoint',
+            brokerURL: WS_URL,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
             

@@ -1,38 +1,38 @@
-// החליפי את הפורט בפורט שמצאת ב-IntelliJ (בדרך כלל 8080)
-const BASE_URL = 'http://192.168.1.167:8080/api'; 
+const SERVER_IP = '192.168.0.225:8080';
 
-/**
- * פונקציה גנרית לביצוע קריאות HTTP
- * @param {string} endpoint - הנתיב (למשל '/animals')
- * @param {object} options - הגדרות נוספות כמו method, body, headers
- */
+export const BASE_URL = `http://${SERVER_IP}/api`;
+export const WS_URL = `ws://${SERVER_IP}/ws-endpoint`;
 export const apiClient = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;
 
-  // הגדרות ברירת מחדל לקריאה
+  // If the body is an instance of FormData, the browser MUST set 
+  // the Content-Type automatically to include the boundary.
+  const isFormData = options.body instanceof FormData;
+
   const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-      // כאן תוכלי להוסיף בעתיד טוקן של Role/Auth אם תצטרכי
-    },
     ...options,
+    headers: {
+      // Only set JSON header if it's NOT FormData
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...options.headers,
+    },
   };
 
   try {
     const response = await fetch(url, defaultOptions);
 
-    // ב-Fetch חייבים לבדוק ידנית אם התשובה תקינה (סטטוס 200-299)
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `שגיאת שרת: ${response.status}`);
+      throw new Error(errorData.message || `Server Error: ${response.status}`);
     }
 
-    // אם התשובה ריקה (למשל במחיקה), לא ננסה להמיר ל-JSON
     if (response.status === 204) return null;
 
     return await response.json();
   } catch (error) {
-    console.error('API Error:', error.message);
-    throw error; // זריקת השגיאה כדי שהקומפוננטה תוכל לטפל בה
+    if (error instanceof TypeError) {
+      throw new Error("Unable to connect to the server.");
+    }
+    throw error;
   }
 };

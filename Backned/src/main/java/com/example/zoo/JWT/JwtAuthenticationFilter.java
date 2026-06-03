@@ -27,51 +27,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String path = request.getServletPath();
+        // Use getRequestURI() as it's more reliable across different servlet containers
+        String uri = request.getRequestURI();
 
-        if (path.startsWith("/ws-endpoint")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 🔴 whitelist ברור
-        if (path.startsWith("/api/v1/public") ||
-                path.equals("/api/v1/admin/login")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String token = extractToken(request);
-
-        if (token != null && jwtUtil.isValidToken(token)) {
-
-            String username = jwtUtil.extractUsername(token);
-            String role = jwtUtil.extractRole(token);
-
-            SimpleGrantedAuthority authority =
-                    new SimpleGrantedAuthority("ROLE_" + role);
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            username,
-                            null,
-                            Collections.singletonList(authority)
-                    );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // ❗ חשוב: לא ליפול על OPTIONS (CORS preflight)
+        // 1. Always allow OPTIONS
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().write("Unauthorized: Invalid or missing token");
+        // 2. Allow whitelisted paths (be precise with prefixes)
+        if (uri.startsWith("/uploads/") ||
+                uri.startsWith("/ws-endpoint") ||
+                uri.startsWith("/api/v1/public") ||
+                uri.equals("/api/v1/admin/login") ||
+                uri.contains("/h2-console")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 3. Extract and validate token
+        String token = extractToken(request);
+        if (token != null && jwtUtil.isValidToken(token)) {
+            String username = jwtUtil.extractUsername(token);
+            String role = jwtUtil.extractRole(token);
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(authority));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+        } else {
+            // Only return 401 if it's NOT a whitelisted path and token is bad
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Unauthorized: Invalid or missing token");
+        }
     }
 
     // Helper method to extract token from Authorization header
