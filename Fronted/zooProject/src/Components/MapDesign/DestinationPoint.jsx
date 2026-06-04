@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import '../Scss/DestinationPoint.scss'; 
-import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
-import { BASE_URL } from '../Api/apiClient';
+import '../../Scss/DestinationPoint.scss'; 
+import StatusDisplay from '.././ErrorDisplay/StatusDisplay'; 
+import { BASE_URL } from '../../Api/apiClient';
 
 const DestinationPoint = ({ destination, isEditorActive, isSelected, onClick }) => {
   const [showInfo, setShowInfo] = useState(false);

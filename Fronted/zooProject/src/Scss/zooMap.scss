@@ -1,133 +1,66 @@
-// Variables
-$deep-black: #000000;
-$neon-accent: rgba(99, 102, 241, 0.25); // Subtle indigo glow
-$map-green: #1b4332;
-
 .zoo-app-layout {
   display: flex;
   width: 100vw;
   height: 100vh;
   background: $deep-black;
   overflow: hidden;
+  position: relative;
 }
 
-// 1. THIS CREATES THE BLACK MARGINS
+// 1. המפה היא המרכז (ה"גיבורה")
 .center-viewport-container {
   flex: 1;
-  padding: 24px; // Control the margin size here
-  background: $deep-black;
-  height: 100%;
-  display: flex;
-  box-sizing: border-box;
-}
-
-// 2. THIS CREATES THE ROUNDED CARD WITH GLOW
-.zoo-map-main-area {
-  flex: 1;
-  position: relative;
-  background: #050505;
-  border-radius: 30px; 
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  
-  // THE "DARK LIGHT" GLOW
-  box-shadow: 
-    inset 0 0 40px rgba(0, 0, 0, 0.9),
-    0 0 20px $neon-accent;
-    .map-3d-wrapper {
-    width: 100%;
-    height: 100%;
-    background: #b1e4a3; // צבע בסיס שמתאים לדשא ב-3D
-    border-radius: inherit; // יורש את ה-30px של האבא
-    overflow: hidden;
-  }
+  order: 2; // המפה תמיד באמצע
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
 
-  .map-3d-wrapper {
-    flex: 1; // גורם לדיב לתפוס את כל הגובה שנותר באבא
-    width: 100%;
+// 2. סרגלי הצד (הלוגיקה המרכזית למסכים רחבים)
+.app-sidebar {
+  width: 300px;
+  order: 1; // צד שמאל
+  background: rgba(0,0,0,0.8);
+  border-right: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.3s ease;
+
+  @media (max-width: 1024px) {
+    position: absolute;
+    left: 0;
+    top: 0;
     height: 100%;
-    position: relative;
-    
-    canvas {
-      position: absolute; // מוודא שהקנבס לא "דוחף" אלמנטים אחרים
-      top: 0;
-      left: 0;
-      width: 100% !important;
-      height: 100% !important;
-    }
-  }
-
-}
-
-// עיצוב כפתורי הבקרה (Floating Controls)
-.view-mode-controls {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
     z-index: 100;
-    display: flex;
-    gap: 12px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 8px 16px;
-    border-radius: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-
-    .btn-view {
-        background: transparent;
-        border: none;
-        color: rgba(255, 255, 255, 0.6);
-        padding: 8px 16px;
-        cursor: pointer;
-        font-weight: 600;
-        border-radius: 30px;
-        transition: all 0.3s ease;
-
-        &.active {
-            background: #6366f1; // תואם ל-neon-accent שלך
-            color: white;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-        }
-
-        &:hover:not(.active) {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
-    }
+    // כאן תוכל להוסיף לוגיקה של "פתיחה בלחיצה" אם תרצה
+  }
 }
 
-.map-viewport {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: $map-green; // Ensures the base is green
+.chat-app-container {
+  width: 300px;
+  order: 3; // צד ימין
+  background: rgba(0,0,0,0.8);
+  border-left: 1px solid rgba(255,255,255,0.1);
 
-  .map-background-image {
+  @media (max-width: 1024px) {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 85%; 
-    height: 85%;
-    z-index: 1;
-    
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      opacity: 0.6;
-      mix-blend-mode: soft-light; // Blends design with green base
-    }
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 100;
   }
+}
 
-  .map-grid-overlay {
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 30px 30px;
-    z-index: 2;
+// 3. בטלפונים צרים - המפה על כל המסך
+@media (max-width: 768px) {
+  .app-sidebar, .chat-app-container {
+    display: none; // מסתיר את הסרגלים בטלפון כדי לתת למפה את כל המקום
+  }
+  
+  .center-viewport-container {
+    padding: 0; // פריסה מלאה
+  }
+  
+  .zoo-map-main-area {
+    border-radius: 0; // מפה ללא שוליים במובייל למראה נקי
   }
 }

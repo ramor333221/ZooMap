@@ -3,15 +3,17 @@ import { routeService } from '../Api/routeService';
 import { destinationService } from '../Api/destinationService';
 import { navigationService } from '../Api/navigationService';
 import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
-import RoutePath from './RoutePath';
-import DestinationPoint from './DestinationPoint';
+import RoutePath from './MapDesign/RoutePath';
+import DestinationPoint from './MapDesign/DestinationPoint';
 import DestinationSelector from './MapDesign/DestinationSelector';
-import MapEditorManager from './MapEditorManager'; 
-import Login from './Login'; 
+import MapEditorManager from './Editor/MapEditorManager'; 
+import Login from './Login/Login'; 
 import Map3DView from './3DView/Map3DView';
 import ChatApp from './Chat/ChatApp';
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
+import '../Scss/Route.scss';
+
 
 const ZooMap = () => {
     const [routes, setRoutes] = useState([]);
@@ -133,7 +135,7 @@ const ZooMap = () => {
                             </div>
                         </div>
 
-                       {!isEditorActive ? (
+                        {!isEditorActive ? (
                             <DestinationSelector
                                 destinations={destinations}
                                 selectedTargets={selectedTargets}
@@ -142,7 +144,10 @@ const ZooMap = () => {
                                 isCalculating={isCalculating}
                             />
                         ) : (
-                            null
+                            /* FIX: We provide a dedicated, stable div for the Portals */
+                            <div className="admin-editor-sidebar-content">
+                                <div id="editor-sidebar-portal-root"></div>
+                            </div>
                         )}
 
                         {optimizedRoute && (
@@ -196,8 +201,7 @@ const ZooMap = () => {
                                 <div className="map-background-image"><img src="./mapBackground.png" alt="Map Design" /></div>
                                 <div className="map-grid-overlay"></div>
 
-                                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                    {routes.map(route => (
+<svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">                                    {routes.map(route => (
                                         <RoutePath key={`static-${route.id}`} route={route} isDimmed={!!optimizedRoute} />
                                     ))}
                                     {optimizedRoute && optimizedRoute.pathEdges.map((edge, index) => (

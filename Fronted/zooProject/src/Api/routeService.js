@@ -17,11 +17,29 @@ addRoute: (routeData) => {
   });
 },
   
-  updateRoute: (routeData) => apiClient('/v1/admin/routes/{id}', {
-    method: 'PUT',
-    body: JSON.stringify(routeData)
-  }),
+ updateRoute: (id, routeData) => {
+    const token = localStorage.getItem('auth_token'); 
+    return apiClient(`/v1/admin/routes/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(routeData)
+    });
+},
 
-  deleteRoute: (routeData) => apiClient('/v1/admin/routes/{id}', {
-    method: 'DELETE',}),
-};
+
+
+deleteRoute: async (id) => {
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await apiClient(`/v1/admin/routes/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return response;
+}
+}

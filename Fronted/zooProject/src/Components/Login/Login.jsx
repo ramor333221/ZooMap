@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { authService } from '../Api/authService'; 
-import '../Scss/LoginModal.scss';
-import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
+import { authService } from '../../Api/authService'; 
+import '../../Scss/LoginModal.scss';
+import StatusDisplay from '.././ErrorDisplay/StatusDisplay'; 
 
 const Login = ({ onLoginSuccess, onClose }) => {
   const [formData, setFormData] = useState({

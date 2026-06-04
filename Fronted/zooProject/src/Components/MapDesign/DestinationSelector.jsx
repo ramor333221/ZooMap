@@ -1,5 +1,5 @@
 import React from 'react';
-import '../Scss/DestinationSelector.scss'; // Link to modular sidebar layout styles
+import '../../Scss/DestinationSelector.scss'; // Link to modular sidebar layout styles
 
 const DestinationSelector = ({ destinations, selectedTargets, onToggle, onCalculate, isCalculating }) => {
     return (

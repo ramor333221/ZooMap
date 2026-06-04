@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import * as THREE from 'three';
 import { Billboard, useTexture, Html, Float } from '@react-three/drei';
+import { BASE_URL } from '../../Api/apiClient'; // Ensure this path is correct
 
 const Destination3D = ({ data, color }) => {
   const [hovered, setHovered] = useState(false);
-  const texture = useTexture(`/${data.picUrl}`);
+
+  // Construct the absolute URL correctly to avoid loading errors
+  const serverHost = BASE_URL.replace('/api', '');
+  const imageUrl = `${serverHost}${data.picUrl.startsWith('/') ? '' : '/'}${data.picUrl}`;
+  
+  // Load texture
+  const texture = useTexture(imageUrl);
 
   const posX = (data.location?.x ?? data.x) - 50;
   const posZ = (data.location?.y ?? data.y) - 50;

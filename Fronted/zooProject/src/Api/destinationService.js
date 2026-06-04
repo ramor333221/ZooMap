@@ -6,36 +6,27 @@ export const destinationService = {
   getCategoryTypes: () => apiClient('/v1/admin/categories'),
   getAllDestinations: () => apiClient('/v1/public/destinations'),
 
-addDestination: (destinationData) => {
+addDestination: (formData) => {
     const token = localStorage.getItem('auth_token');
-    const formData = new FormData();
-    const { imageFile, previewUrl, ...pureData } = destinationData;
-
-    formData.append("destination", new Blob([JSON.stringify(pureData)], { type: "application/json" }));
-    if (imageFile) formData.append("file", imageFile);
 
     return apiClient('/v1/admin/destinations', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
+      headers: { 
+          'Authorization': `Bearer ${token}` 
+      },
+      body: formData 
     });
 },
 
-  updateDestination: (id, destinationData) =>{
+updateDestination: (id, formData) => {
     const token = localStorage.getItem('auth_token');
-    const formData = new FormData();
-    const { imageFile, previewUrl, ...pureData } = destinationData;
-    
-    formData.append("destination", new Blob([JSON.stringify(pureData)], { type: "application/json" }));
-    if (imageFile) formData.append("file", imageFile);
 
     return apiClient(`/v1/admin/destinations/${id}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData
     });
-  },
-
+},
   
   deleteDestination: (id) => apiClient(`/v1/admin/destinations/${id}`, {
     method: 'DELETE',
