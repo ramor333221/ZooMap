@@ -5,7 +5,7 @@ import { navigationService } from '../Api/navigationService';
 import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
 import RoutePath from './RoutePath';
 import DestinationPoint from './DestinationPoint';
-import DestinationSelector from './DestinationSelector';
+import DestinationSelector from './MapDesign/DestinationSelector';
 import MapEditorManager from './MapEditorManager'; 
 import Login from './Login'; 
 import Map3DView from './3DView/Map3DView';

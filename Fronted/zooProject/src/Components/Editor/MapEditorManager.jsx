@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import RouteEditor from './RouteEditor';
+import RouteEditor from './routeEditor';
 import DestinationEditor from './destinationEditor';
 import EditorToolbar from './EditorToolbar';
 
