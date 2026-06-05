@@ -28,26 +28,26 @@ const RouteDelete = ({ destinations = [], onDeletionSuccess }) => {
     };
 
     const handleConfirmDelete = async () => {
-    if (!selectedRoute?.id) return;
-    
-    setIsLoading(true);
-    try {
-        const response = await routeService.deleteRoute(selectedRoute.id);
+        if (!selectedRoute?.id) return;
         
-        // Success case
-        alert(response.message || "Route deleted successfully!");
-        
-        setSelectedRoute(null);
-        await loadRoutes();
-        if (onDeletionSuccess) onDeletionSuccess();
-        
-    } catch (err) {
-        const errorMessage = err.response?.data?.message || err.message || "Failed to delete the route.";
-        alert(errorMessage); 
-    } finally {
-        setIsLoading(false);
-    }
-};
+        setIsLoading(true);
+        try {
+            const response = await routeService.deleteRoute(selectedRoute.id);
+            
+            // Success case
+            alert(response.message || "Route deleted successfully!");
+            
+            setSelectedRoute(null);
+            await loadRoutes();
+            if (onDeletionSuccess) onDeletionSuccess();
+            
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || "Failed to delete the route.";
+            alert(errorMessage); 
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const getDestinationName = (id) => {
         const match = destinations.find(d => d.id === parseInt(id));
@@ -58,11 +58,20 @@ const RouteDelete = ({ destinations = [], onDeletionSuccess }) => {
         <g className="route-delete-layer">
             {localRoutes.map(route => {
                 if (!route.bodyPoints || route.bodyPoints.length < 2) return null;
-                const pathData = route.bodyPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+                
+                // Filter out any null or undefined points to prevent the runtime crash
+                const validPoints = route.bodyPoints.filter(p => p && typeof p.x === 'number' && typeof p.y === 'number');
+                
+                // Ensure we still have at least 2 valid points to render a meaningful path
+                if (validPoints.length < 2) return null;
+
+                const pathData = validPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
                 
                 return (
-                    <g key={`del-${route.id}`} onClick={() => handleSelectRoute(route.id)}>
+                    <g key={`del-${route.id}`} onClick={() => handleSelectRoute(route.id)} style={{ cursor: 'pointer' }}>
+                        {/* Invisible thicker path to make clicking easier */}
                         <path d={pathData} fill="none" stroke="transparent" strokeWidth="10" />
+                        {/* Visible styled path */}
                         <path d={pathData} fill="none" stroke={selectedRoute?.id === route.id ? "#ef4444" : "#94a3b8"} strokeWidth="2" />
                     </g>
                 );

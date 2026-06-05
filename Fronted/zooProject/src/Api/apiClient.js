@@ -22,7 +22,6 @@ export const apiClient = async (endpoint, options = {}) => {
     const response = await fetch(url, defaultOptions);
 
     if (!response.ok) {
-      // Handle errors (try JSON, fallback to text)
       const errorText = await response.text();
       let errorMessage;
       try {
@@ -35,14 +34,13 @@ export const apiClient = async (endpoint, options = {}) => {
 
     if (response.status === 204) return null;
 
-    // --- THE FIX STARTS HERE ---
+
     const responseText = await response.text();
     try {
-      return JSON.parse(responseText); // Try to parse as JSON
+      return JSON.parse(responseText); 
     } catch {
-      return { message: responseText }; // If it fails, return text as a message object
+      return { message: responseText }; 
     }
-    // --- THE FIX ENDS HERE ---
 
   } catch (error) {
     if (error instanceof TypeError) {

@@ -45,21 +45,29 @@ const ZooMap = () => {
     };
 
     const handleCalculateRoute = async () => {
-        if (selectedTargets.length < 2) {
-            setAppStatus({ type: 'warning', message: 'Please select at least 2 destinations.', isFatal: false });
-            return;
-        }
-        setIsCalculating(true);
-        setAppStatus(null);
-        try {
-            const data = await navigationService.getOptimizedRoute(selectedTargets);
-            setOptimizedRoute(data);
-        } catch (err) {
-            setAppStatus({ type: 'error', message: 'Unable to calculate route. Server unreachable.', isFatal: false });
-        } finally {
-            setIsCalculating(false);
-        }
-    };
+    if (selectedTargets.length < 2) {
+        setAppStatus({ type: 'warning', message: 'Please select at least 2 destinations.', isFatal: false });
+        return;
+    }
+    setIsCalculating(true);
+    setAppStatus(null);
+    
+    try {
+        const selectedDestinationObjects = destinations.filter(d => selectedTargets.includes(d.id));
+        const entranceNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('entrance'));
+        const exitNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('exit'));
+
+        const startId = entranceNode ? entranceNode.id : null;
+        const endId = exitNode ? exitNode.id : null;
+        const data = await navigationService.getOptimizedRoute(selectedTargets, startId, endId);
+        
+        setOptimizedRoute(data);
+    } catch (err) {
+        setAppStatus({ type: 'error', message: 'Unable to calculate route. Server unreachable.', isFatal: false });
+    } finally {
+        setIsCalculating(false);
+    }
+};
 
     const fetchMapData = async () => {
         setLoading(true);
