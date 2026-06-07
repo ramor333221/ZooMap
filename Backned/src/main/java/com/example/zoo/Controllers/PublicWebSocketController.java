@@ -2,13 +2,17 @@ package com.example.zoo.Controller;
 
 import com.example.zoo.DTO.ChatMessageDTO;
 import com.example.zoo.Service.AI.ChatAiService;
-import com.example.zoo.Service.AI.ZooNavigationAssistant;
+import com.example.zoo.Service.AI.ZooAINavigationAssistant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 @Controller
 @Slf4j
@@ -19,27 +23,12 @@ public class PublicWebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat")
-    public void handleChatMessage(@Payload ChatMessageDTO message) {
-        // 1. זה ה-ID האמיתי והנכון שהדפדפן שלח!
-        String customSessionId = message.getChatSessionId();
-        log.info("Received message with custom chatSessionId from React: {}", customSessionId);
+    public void handleChatMessage(@Payload ChatMessageDTO message, Principal principal) {
+        String sharedRoomId = message.getChatSessionId();
+        String myUserId = principal.getName();
 
-        try {
-            // 2. קבלת תשובה מה-AI
-            ChatMessageDTO response = chatAiService.processChatMessage(customSessionId, message);
+        ChatMessageDTO aiResponse = chatAiService.processChatMessage(sharedRoomId, message);
 
-            // 3. התיקון הקריטי: מוודאים שה-ID המקורי נשמר ולא הולך לאיבוד
-            response.setChatSessionId(customSessionId);
-
-            // 4. שימוש ב-customSessionId המקורי בשביל בניית נתיב השליחה
-            String dynamicDestination = "/topic/reply-" + customSessionId;
-            messagingTemplate.convertAndSend(dynamicDestination, response);
-
-            log.info("AI response successfully sent to the CORRECT destination: {}", dynamicDestination);
-
-        } catch (Exception e) {
-            log.error("Failed to process or send AI message: {}", e.getMessage());
-        }
+        messagingTemplate.convertAndSendToUser(myUserId, "/queue/reply", aiResponse);
     }
-
 }

@@ -21,13 +21,11 @@ public class PublicController {
     private final NavigationService navigationService;
     private final RouteService routeService;
 
-    // שליפת כל היעדים הפעילים להצגה על המפה
     @GetMapping("/destinations")
     public ResponseEntity<List<Destination>> getAllDestinations() {
         return ResponseEntity.ok(destinationService.getAll());
     }
 
-    // חישוב המסלול האופטימלי בין נקודות שנבחרו
     @PostMapping("/bestRoute")
     public ResponseEntity<RouteResponseDTO> getBestRoute(
             @RequestBody List<Integer> selectedIds,

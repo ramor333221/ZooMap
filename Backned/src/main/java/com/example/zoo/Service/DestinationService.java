@@ -1,15 +1,16 @@
 package com.example.zoo.Service;
 
 import com.example.zoo.DTO.DestinationDTO;
-import com.example.zoo.Entities.CategoryType;
-import com.example.zoo.Entities.Destination;
-import com.example.zoo.Entities.Point;
-import com.example.zoo.Exceptions.AppExceptions; // ייבוא קובץ החריגות המרכזי
+import com.example.zoo.Entities.*;
+import com.example.zoo.Exceptions.AppExceptions;
 import com.example.zoo.Repositories.DestinationRepo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,9 @@ public class DestinationService {
 
     private final DestinationRepo destinationRepo;
     private final NavigationService navigationService;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     public DestinationService(DestinationRepo destinationRepo,
                               @Lazy NavigationService navigationService) {
@@ -42,31 +46,61 @@ public class DestinationService {
 
     // --- WRITE (Admin) ---
     @Transactional
-    public Destination add(DestinationDTO dto) {
-        Destination destination = Destination.builder()
-                .name(dto.getName())
-                .picUrl(dto.getPicUrl())
-                .description(dto.getDescription())
-                .category(findCategory(dto.getCategory()))
-                .location(new Point(dto.getX(), dto.getY()))
-                .build();
+    public Destination update(int id, DestinationDTO dto, MultipartFile file) {
+        Destination existing = getById(id);
 
-        Destination saved = destinationRepo.save(destination);
-        navigationService.refresh();
-        return saved;
+        try {
+            if (file != null && !file.isEmpty()) {
+                Path root = Paths.get(uploadDir);
+                if (!Files.exists(root)) Files.createDirectories(root);
+
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                Files.copy(file.getInputStream(), root.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+                existing.setPicUrl("/uploads/" + fileName);
+            }
+            else if (dto.getPicUrl() != null) {
+                existing.setPicUrl(dto.getPicUrl());
+            }
+
+            existing.setName(dto.getName());
+            existing.setDescription(dto.getDescription());
+            existing.setCategory(findCategory(dto.getCategory()));
+
+            Destination saved = destinationRepo.save(existing);
+            navigationService.refresh();
+            return saved;
+
+        } catch (IOException e) {
+            throw new AppExceptions.BadRequest("Could not update file: " + e.getMessage());
+        }
     }
 
     @Transactional
-    public Destination update(int id, DestinationDTO dto) {
-        Destination existing = getById(id); // כבר זורק ResourceNotFound אם לא קיים
-        existing.setName(dto.getName());
-        existing.setPicUrl(dto.getPicUrl());
-        existing.setDescription(dto.getDescription());
-        existing.setCategory(findCategory(dto.getCategory()));
+    public Destination addWithImage(DestinationDTO dto, MultipartFile file) {
+        try {
+            Path root = Paths.get(uploadDir);
+            if (!Files.exists(root)) Files.createDirectories(root);
 
-        Destination saved = destinationRepo.save(existing);
-        navigationService.refresh();
-        return saved;
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Files.copy(file.getInputStream(), root.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+            dto.setPicUrl("/uploads/" + fileName);
+
+            Destination destination = Destination.builder()
+                    .name(dto.getName())
+                    .picUrl(dto.getPicUrl())
+                    .description(dto.getDescription())
+                    .category(findCategory(dto.getCategory()))
+                    .location(new Point(dto.getX(), dto.getY()))
+                    .build();
+
+            Destination saved = destinationRepo.save(destination);
+            navigationService.refresh();
+            return saved;
+        } catch (IOException e) {
+            throw new AppExceptions.BadRequest("Could not store file: " + e.getMessage());
+        }
     }
 
     @Transactional

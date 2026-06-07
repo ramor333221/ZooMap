@@ -18,7 +18,6 @@ public class AuthService {
     public Users login(String username, String password) {
         Users user = userRepo.findByUsername(username);
 
-        // שימוש ב-BadRequest עבור פרטי התחברות שגויים
         if (user == null) {
             throw new AppExceptions.BadRequest("Invalid username or password");
         }
@@ -32,7 +31,6 @@ public class AuthService {
 
     @Transactional
     public Users register(Users user) {
-        // בדיקה אם שם המשתמש כבר תפוס
         if (userRepo.findByUsername(user.getUsername()) != null) {
             throw new AppExceptions.BadRequest("Username already exists");
         }

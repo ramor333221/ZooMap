@@ -1,9 +1,9 @@
 package com.example.zoo.Service;
 
 import com.example.zoo.DTO.RouteDTO;
-import com.example.zoo.Entities.Route;
 import com.example.zoo.Entities.Destination;
 import com.example.zoo.Entities.Point;
+import com.example.zoo.Entities.Route;
 import com.example.zoo.Exceptions.AppExceptions; // ייבוא קובץ החריגות המרכזי
 import com.example.zoo.Repositories.RouteRepo;
 import com.example.zoo.Repositories.DestinationRepo;
@@ -79,11 +79,12 @@ public class RouteService {
 
     @Transactional
     public Route addRoute(RouteDTO dto) {
-        // חישוב המרחק האמיתי מתבצע כעת כאן בשרת באופן אוטומטי
+        // חישוב המרחק האמיתי על סמך הנקודות
         double computedDist = calculateRealDistance(dto.getFromD(), dto.getToD(), dto.getBodyPoints());
 
+        // תיקון: שימוש ב-computedDist במקום ב-dto.getDist()
         Route newRoute = routeRepo.save(Route.builder()
-                .dist(computedDist) // דריסת המרחק והזרקת החישוב המדויק
+                .dist(computedDist)
                 .fromD(dto.getFromD())
                 .toD(dto.getToD())
                 .bodyPoints(dto.getBodyPoints())
@@ -98,26 +99,25 @@ public class RouteService {
         Route existingRoute = routeRepo.findById(id)
                 .orElseThrow(() -> new AppExceptions.ResourceNotFound("Update failed: Route not found with id: " + id));
 
-        // וולידציה: מניעת מצב שבו עדכון משאיר יעד ללא מסלול יוצא
         if (existingRoute.getFromD() != dto.getFromD()) {
             if (routeRepo.countByFromD(existingRoute.getFromD()) <= 1) {
                 throw new AppExceptions.BadRequest("Update rejected: Origin destination (" + existingRoute.getFromD() + ") would be left without an outgoing route!");
             }
         }
 
-        // וולידציה: מניעת מצב שבו עדכון משאיר יעד ללא מסלול נכנס
         if (existingRoute.getToD() != dto.getToD()) {
             if (routeRepo.countByToD(existingRoute.getToD()) <= 1) {
                 throw new AppExceptions.BadRequest("Update rejected: Target destination (" + existingRoute.getToD() + ") would be left without an incoming route!");
             }
         }
 
-        // חישוב מחדש של המרחק בעקבות שינוי פיתולי הדרך (bodyPoints)
+        // חישוב המרחק המעודכן על סמך הנקודות החדשות/המעודכנות
         double computedDist = calculateRealDistance(dto.getFromD(), dto.getToD(), dto.getBodyPoints());
 
         existingRoute.setFromD(dto.getFromD());
         existingRoute.setToD(dto.getToD());
-        existingRoute.setDist(computedDist); // החלפת המרחק הישן במרחק המחושב החדש
+        // תיקון: עדכון השדה לערך המחושב האמיתי
+        existingRoute.setDist(computedDist);
         existingRoute.setBodyPoints(dto.getBodyPoints());
 
         Route updatedRoute = routeRepo.save(existingRoute);
@@ -129,9 +129,7 @@ public class RouteService {
     public void deleteRoute(int id) {
         Route route = routeRepo.findById(id)
                 .orElseThrow(() -> new AppExceptions.ResourceNotFound("Route not found with id: " + id));
-
-        // וולידציה: בדיקה שהמחיקה לא יוצרת "אי" מבודד במפה
-        if (routeRepo.countByFromD(route.getFromD()) <= 1 || routeRepo.countByToD(route.getToD()) <= 1) {
+      if (routeRepo.countByFromD(route.getFromD()) <= 1 || routeRepo.countByToD(route.getToD()) <= 1) {
             throw new AppExceptions.BadRequest("Deletion failed: This would cause a destination to be isolated!");
         }
 

@@ -13,13 +13,10 @@ import com.example.zoo.Service.AuthService;
 import com.example.zoo.Service.DestinationService;
 import com.example.zoo.Service.RouteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.UUID;
 import java.util.List;
 
 @RestController
@@ -54,31 +51,22 @@ public class AdminController {
         );
     }
 
-    // --- טיפול ביעדים (Destinations) עם תמיכה בהעלאת קבצים ותמונות ---
-
-    @PostMapping(value = "/destinations", consumes = {"multipart/form-data"})
+    @PostMapping(value = "/destinations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Destination> addDestination(
             @RequestPart("destination") DestinationDTO dto,
-            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
-
-        if (file != null && !file.isEmpty()) {
-            String fileName = saveImageFile(file);
-            dto.setPicUrl(fileName); // מעדכנים את ה-DTO עם השם הקצר החדש
+            @RequestPart(value = "file", required = true) MultipartFile file) {
+        {
+            return ResponseEntity.ok(destinationService.addWithImage(dto, file));
         }
-        return ResponseEntity.ok(destinationService.add(dto));
     }
 
-    @PutMapping(value = "/destinations/{id}", consumes = {"multipart/form-data"})
+
+    @PutMapping(value = "/destinations/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Destination> updateDestination(
             @PathVariable int id,
             @RequestPart("destination") DestinationDTO dto,
-            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
-
-        if (file != null && !file.isEmpty()) {
-            String fileName = saveImageFile(file);
-            dto.setPicUrl(fileName);
-        }
-        return ResponseEntity.ok(destinationService.update(id, dto));
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        return ResponseEntity.ok(destinationService.update(id, dto, file));
     }
 
     @DeleteMapping("/destinations/{id}")
@@ -91,8 +79,6 @@ public class AdminController {
         List<CategoryType> types = destinationService.getAllCategoryTypes();
         return ResponseEntity.ok(types);
     }
-
-    // --- טיפול במסלולים (Routes) ---
 
     @PostMapping("/routes")
     public ResponseEntity<Route> addRoute(@RequestBody RouteDTO dto) {
@@ -109,26 +95,5 @@ public class AdminController {
     public ResponseEntity<String> deleteRoute(@PathVariable int id) {
         routeService.deleteRoute(id);
         return ResponseEntity.ok("Route deleted successfully");
-    }
-
-    // --- פונקציות עזר פרטיות ---
-
-    /**
-     * פונקציית עזר פרטית בתוך השרת לשמירת הקובץ הפיזי בדיסק הקשיח
-     */
-    private String saveImageFile(MultipartFile file) throws IOException {
-        // נתיב התיקייה שבה יישמרו התמונות בשרת
-        String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
-        File dir = new File(uploadDir);
-        if (!dir.exists()) {
-            dir.mkdirs(); // יצירת התיקייה כולל תיקיות אב אם אינן קיימות
-        }
-
-        // יצירת שם ייחודי גלובלי (UUID) לקובץ כדי למנוע דריסת קבצים בעלי שם זהה
-        String uniqueFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        File destFile = new File(dir, uniqueFileName);
-
-        file.transferTo(destFile); // כתיבת הקובץ הפיזי לדיסק
-        return uniqueFileName; // מחזיר את שם הקובץ החדש בלבד (למשל: e4a3b2..._lion.jpg)
     }
 }

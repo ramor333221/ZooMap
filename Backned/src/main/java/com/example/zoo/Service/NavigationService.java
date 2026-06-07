@@ -43,12 +43,10 @@ public class NavigationService {
     }
 
     public RouteResponseDTO getOptimizedRoute(List<Integer> selectedTargetIds, Integer startId, Integer endId) {
-        // בדיקה אם הרשימה ריקה
         if (selectedTargetIds == null || selectedTargetIds.isEmpty()) {
             throw new AppExceptions.BadRequest("No targets selected for navigation");
         }
 
-        // בדיקה שהגרף הוטען
         if (currentGraph == null || currentGraph.vertexSet().isEmpty()) {
             throw new AppExceptions.InvalidRoute("The zoo map graph is not loaded or empty");
         }
@@ -57,7 +55,6 @@ public class NavigationService {
         if (startId != null) allNodesToVisit.add(startId);
         if (endId != null) allNodesToVisit.add(endId);
 
-        // בדיקה שכל הנקודות קיימות בגרף לפני שמתחילים
         for (Integer nodeId : allNodesToVisit) {
             if (!currentGraph.containsVertex(nodeId)) {
                 throw new AppExceptions.ResourceNotFound("Location ID " + nodeId + " is not connected to the zoo map");
@@ -142,16 +139,21 @@ public class NavigationService {
 
         if (startId != null) {
             int startIndex = tour.indexOf(startId);
-            if (startIndex != -1) Collections.rotate(tour, -startIndex);
-        }
-
-        if (endId != null && startId != null) {
-            int endIndex = tour.indexOf(endId);
-            if (endIndex < tour.size() / 2) {
-                List<Integer> sub = tour.subList(1, tour.size());
-                Collections.reverse(sub);
+            if (startIndex != -1) {
+                Collections.rotate(tour, -startIndex);
             }
         }
+
+
+        if (endId != null) {
+            int endIndex = tour.indexOf(endId);
+
+            if (endIndex != -1 && endIndex != 0) {
+                Integer removedEnd = tour.remove(endIndex);
+                tour.add(removedEnd); // Appends cleanly to the final index
+            }
+        }
+
         return tour;
     }
 }

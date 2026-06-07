@@ -1,55 +1,70 @@
 package com.example.zoo.JWT;
 
+import com.example.zoo.JWT.JwtUtil;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+
 import java.io.IOException;
 import java.util.Collections;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtUtil jwtUtil;
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) { this.jwtUtil = jwtUtil; }
+
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String token = extractToken(request);
+        String uri = request.getRequestURI();
 
-        if (token != null) {
-            System.out.println("DEBUG: Validating token...");
-            boolean isValid = jwtUtil.isValidToken(token); // בדוק אם ה-Secret מוגדר נכון
-            System.out.println("DEBUG: Token isValid result: " + isValid);
-
-            if (isValid) {
-                String username = jwtUtil.extractUsername(token);
-                String role = jwtUtil.extractRole(token);
-
-                System.out.println("DEBUG: Username: " + username + ", Role: " + role);
-
-                String authorityName = (role != null && role.startsWith("ROLE_")) ? role : "ROLE_" + role;
-                SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityName);
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(authority));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                System.out.println("DEBUG: Authentication set successfully!");
-            } else {
-                System.out.println("DEBUG: Token validation failed - check JwtUtil secret key!");
-            }
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        filterChain.doFilter(request, response);
-    }
 
+        if (uri.startsWith("/uploads/") ||
+                uri.startsWith("/ws-endpoint") ||
+                uri.startsWith("/api/v1/public") ||
+                uri.equals("/api/v1/admin/login") ||
+                uri.contains("/h2-console")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = extractToken(request);
+        if (token != null && jwtUtil.isValidToken(token)) {
+            String username = jwtUtil.extractUsername(token);
+            String role = jwtUtil.extractRole(token);
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(authority));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+        } else {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Unauthorized: Invalid or missing token");
+        }
+    }
 
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
-        return (header != null && header.startsWith("Bearer ")) ? header.substring(7) : null;
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7); // Remove "Bearer " prefix
+        }
+        return null;
     }
 }
