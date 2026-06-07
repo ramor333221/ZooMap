@@ -1,0 +1,165 @@
+.admin-route-form {
+  padding: 20px;
+  color: #f8fafc;
+  background: #0f172a; 
+  border: 1px solid #1e293b; 
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', system-ui, sans-serif;
+  margin-bottom: 35px;
+
+  .form-header {
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    margin-bottom: 20px; 
+    border-bottom: 1px solid #1e293b; 
+    padding-bottom: 12px;
+
+    .header-icon {
+      font-size: 1.2rem;
+    }
+
+    .header-title {
+      margin: 0; 
+      font-size: 18px; 
+      font-weight: 600;
+    }
+  }
+
+  // Status Alerts
+  .alert-message {
+    padding: 10px; 
+    border-radius: 6px; 
+    font-size: 12px; 
+    margin-bottom: 15px;
+
+    &.--error {
+      background: rgba(239, 68, 68, 0.1); 
+      color: #f87171; 
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    &.--success {
+      background: rgba(16, 185, 129, 0.1); 
+      color: #34d399; 
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+  }
+
+  .select-group {
+    margin-bottom: 20px;
+
+    .select-label {
+      display: block; 
+      font-size: 11px; 
+      font-weight: 700; 
+      text-transform: uppercase; 
+      color: #64748b; 
+      margin-bottom: 8px;
+    }
+
+    .route-dropdown {
+      width: 100%; 
+      padding: 10px; 
+      background: #1e293b; 
+      color: #fff; 
+      border: 1px solid #334155; 
+      border-radius: 6px; 
+      outline: none;
+    }
+  }
+
+  .active-route-panel {
+    animation: fadeIn 0.3s ease-out;
+
+    .route-card {
+      background: #1e293b; 
+      padding: 15px; 
+      border-radius: 8px; 
+      border-left: 4px solid #0ea5e9; 
+      margin-bottom: 20px;
+
+      .card-row {
+        &:first-child {
+          margin-bottom: 8px;
+        }
+
+        .label-text {
+          font-size: 11px; 
+          color: #94a3b8; 
+          display: block;
+        }
+
+        .value-text {
+          font-size: 14px; 
+          font-weight: 500;
+        }
+      }
+    }
+
+    .map-hint {
+      font-size: 11px; 
+      color: #64748b; 
+      text-align: center; 
+      font-style: italic; 
+      margin-bottom: 15px;
+    }
+
+    .form-actions {
+      display: flex; 
+      gap: 10px;
+
+      button {
+        padding: 12px; 
+        border-radius: 6px; 
+        font-weight: 600; 
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+
+      .save-btn {
+        flex: 2; 
+        background: #0ea5e9; 
+        color: #fff; 
+        border: none; 
+      }
+
+      .cancel-btn {
+        flex: 1; 
+        background: transparent; 
+        border: 1px solid #ef4444; 
+        color: #ef4444; 
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center; 
+    padding: 20px; 
+    color: #475569; 
+    border: 2px dashed #1e293b; 
+    border-radius: 8px;
+
+    p {
+      margin: 0;
+      font-size: 12px;
+    }
+  }
+}
+
+// Global fade animation wrapper
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

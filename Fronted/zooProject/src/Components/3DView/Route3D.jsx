@@ -3,7 +3,6 @@ import * as THREE from 'three';
 
 const Route3D = ({ data, isHighlighted, isDimmed, color = "#f59e0b" }) => {
   const pointsData = useMemo(() => {
-    // קריאת נקודות מתוך bodyPoints (מתאים גם למסלול רגיל וגם ל-edge של מסלול אופטימלי)
     const rawPoints = data.bodyPoints || [];
     return rawPoints.filter(p => p && typeof p.x !== 'undefined' && typeof p.y !== 'undefined');
   }, [data]);
@@ -22,6 +21,7 @@ const Route3D = ({ data, isHighlighted, isDimmed, color = "#f59e0b" }) => {
 
     const gravel = [];
     const sampling = 150;
+    
     for (let i = 0; i <= sampling; i++) {
       const t = i / sampling;
       const point = curve.getPoint(t);
@@ -42,6 +42,7 @@ const Route3D = ({ data, isHighlighted, isDimmed, color = "#f59e0b" }) => {
         }
       });
     }
+    
     return { geometry: geo, gravelPositions: gravel };
   }, [pointsData]);
 

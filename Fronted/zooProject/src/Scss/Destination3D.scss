@@ -1,0 +1,13 @@
+.destination-marker-label {
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  white-space: nowrap;
+  
+  // System overrides to support dynamic background color injection
+  background-color: var(--marker-bg-color, #2563eb);
+}

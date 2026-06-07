@@ -54,6 +54,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AppExceptions.AiServiceException.class)
+    public ResponseEntity<ExceptionResponse> handleAiServiceException(AppExceptions.AiServiceException ex) {
+        ExceptionResponse response = ExceptionResponse.builder()
+                .message(ex.getMessage())
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleGeneralException(Exception ex) {
         ExceptionResponse response = ExceptionResponse.builder()

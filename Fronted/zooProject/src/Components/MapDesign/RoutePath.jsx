@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import StatusDisplay from '../ErrorDisplay/StatusDisplay';
+import '../../Scss/Route.scss';
 
 const RoutePath = ({ route, isHighlighted, isDimmed, isOptimized = false }) => {
-  // Fix: Filter out invalid points to prevent "Cannot read properties of null"
   const validPoints = route?.bodyPoints?.filter(p => p && typeof p.x === 'number' && typeof p.y === 'number') || [];
 
   if (validPoints.length < 2) {
@@ -14,7 +14,6 @@ const RoutePath = ({ route, isHighlighted, isDimmed, isOptimized = false }) => {
     .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
     .join(' ');
 
-  // Styling configuration
   const baseBeige = "#F5F5DC";
   const borderBeige = "#D2B48C";
   const highlightColor = "#E6C9A8";

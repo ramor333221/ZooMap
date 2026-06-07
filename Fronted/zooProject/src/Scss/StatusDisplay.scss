@@ -1,0 +1,56 @@
+.status-display-container {
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 20px;
+  font-family: sans-serif;
+  transition: all 0.3s ease;
+
+  // Error Variant
+  &.--error {
+    border: 1px solid #ff4d4f;
+    background-color: #fff2f0;
+    color: #cf1322;
+
+    .status-display-btn {
+      background-color: #cf1322;
+    }
+  }
+
+  // Warning Variant
+  &.--warning {
+    border: 1px solid #faad14;
+    background-color: #fffbe6;
+    color: #d46b08;
+
+    .status-display-btn {
+      background-color: #d46b08;
+    }
+  }
+
+  .status-display-icon {
+    margin-bottom: 10px;
+  }
+
+  .status-display-title {
+    margin: 0 0 10px 0;
+  }
+
+  .status-display-message {
+    margin: 0 0 15px 0;
+  }
+
+  .status-display-btn {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    color: white;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}

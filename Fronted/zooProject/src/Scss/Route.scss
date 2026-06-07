@@ -20,15 +20,16 @@
     height: 100%;
     object-fit: contain; 
   }
-} // סגרנו את map-background-image
+}
 
-.map-svg-layer, .map-markers-layer {
+.map-svg-layer, 
+.map-markers-layer {
   position: absolute; 
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; 
+  pointer-events: none; // מפתח: ה-SVG יתאים את עצמו בדיוק לגבולות ה-Viewport
 }
 
 /* --- 2. עיצוב המסלולים --- */
@@ -43,12 +44,14 @@
 
   .path-main {
     stroke-width: 3px;
+    
     @media (max-width: 1024px) { stroke-width: 2.5px; }
     @media (max-width: 768px) { stroke-width: 2px; }
   }
 
   .path-motion {
     stroke-width: 2px;
+    
     @media (max-width: 1024px) { stroke-width: 1.8px; }
     @media (max-width: 768px) { stroke-width: 1.5px; }
   }
@@ -64,24 +67,12 @@
   }
 }
 
-/* --- 3. עורך המסלולים --- */
 .route-editor-overlay {
   .editor-path-preview {
     stroke-width: 1.2px;
     stroke-linecap: round;
     stroke-linejoin: round;
+    
     @media (max-width: 768px) { stroke-width: 1px; }
   }
-}
-
-
-
-.map-svg-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  // זה ה-מפתח: ה-SVG יתאים את עצמו בדיוק לגבולות ה-Viewport
-  pointer-events: none; 
 }

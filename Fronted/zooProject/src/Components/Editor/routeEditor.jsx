@@ -8,14 +8,14 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
     const [points, setPoints] = useState([]);
     const [fromId, setFromId] = useState(null);
 
-    // Common reset logic
+
     const reset = () => {
         setIsDrawing(false);
         setPoints([]);
         setFromId(null);
     };
 
-    // Canvas click handling (Create mode only)
+
     const handleCanvasClick = (e) => {
         if (!isDrawing || action !== 'create') return;
 
@@ -27,7 +27,6 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
         setPoints(prev => [...prev, { x, y }]);
     };
 
-    // Node click handling (Create mode only)
     const handleNodeClick = (e, dest) => {
         if (action !== 'create') return;
         e.stopPropagation();
@@ -63,7 +62,7 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
         reset();
     };
 
-    // Styles
+
     const activeRoutePreviewColor = "#38bdf8";
     const sourceNodeActiveColor = "#10b981";
     const destinationNodeColor = "rgba(244, 63, 94, 0.25)";
@@ -71,7 +70,7 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
     return (
         <g className="route-editor-container">
             
-            {/* 1. Update/Modify Mode */}
+
             {action === 'update' && (
                 <RouteUpdate 
                     destinations={destinations} 
@@ -79,7 +78,7 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
                 />
             )}
 
-            {/* 2. Delete Mode - New Section */}
+
             {action === 'delete' && (
                 <RouteDelete 
                     destinations={destinations} 
@@ -87,7 +86,7 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
                 />
             )}
 
-            {/* 3. Create Mode */}
+
             {action === 'create' && (
                 <g style={{ pointerEvents: 'all' }} className="route-create-overlay">
                     <rect

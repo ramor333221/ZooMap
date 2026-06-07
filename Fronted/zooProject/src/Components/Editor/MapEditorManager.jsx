@@ -8,10 +8,8 @@ const MapEditorManager = ({ destinations, onSaveSuccess }) => {
     const [mode, setMode] = useState('route');
     const [action, setAction] = useState('create');
 
-    // Remove the renderToolbar function logic and just render components
     return (
         <>
-            {/* Portal 1: The Toolbar stays at the top */}
             {ReactDOM.createPortal(
                 <EditorToolbar 
                     mode={mode} 

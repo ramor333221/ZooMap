@@ -6,10 +6,9 @@ const MessageInput = ({ onSendMessage, disabled }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (text.trim() === '') return;
-        
-        // שליחת הטקסט לרכיב האב
+
         onSendMessage(text);
-        setText(''); // איפוס השדה
+        setText('');
     };
 
     return (

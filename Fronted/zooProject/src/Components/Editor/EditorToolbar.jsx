@@ -1,6 +1,6 @@
 import React from 'react';
 import '../../Scss/_editorToolbar.scss'; 
-import { FaRoute, FaTrashCan } from "react-icons/fa6"; // Added FaTrashCan
+import { FaRoute, FaTrashCan } from "react-icons/fa6"; 
 import { IoLocationSharp } from "react-icons/io5";
 
 const EditorToolbar = ({ mode, setMode, action, setAction }) => {

@@ -5,17 +5,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.web.SecurityFilterChain;
+
 import java.util.List;
 
-@Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+@Configuration
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final JwtUtil jwtUtil;
 
@@ -24,38 +25,44 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Link your CORS bean here
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions().disable())
-                .authorizeRequests(auth -> auth
-                        .antMatchers("/uploads/**").permitAll()
-                        .antMatchers("/ws-endpoint/**", "/topic/**", "/queue/**", "/user/**").permitAll()
-                        .antMatchers("/api/v1/admin/login", "/h2-console/**", "/api/v1/public/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(10);
+    }
 
-        return http.build();
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .cors().and()
+                .csrf().disable()
+                .headers().frameOptions().disable().and()
+                // הגדרה זו מוודאת ש-Spring לא ינהל Session (חובה ל-JWT)
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+
+                .authorizeRequests()
+                // החרגות ציבוריות
+                .antMatchers("/ws-endpoint/**", "/topic/**", "/queue/**", "/user/**").permitAll()
+                .antMatchers("/api/v1/admin/login", "/api/v1/public/**").permitAll()
+                .antMatchers("/h2-console/**", "/uploads/**").permitAll()
+
+                // כאן אנחנו מגנים על האדמין
+                .antMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+
+                .anyRequest().authenticated()
+                .and()
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://127.0.0.1:5173","http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175"));
+        // איחדתי את כל הכתובות שציינת
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5176"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // IMPORTANT: Ensure "Authorization" is in allowed headers!
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Cache-Control"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
-    }
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
     }
 }

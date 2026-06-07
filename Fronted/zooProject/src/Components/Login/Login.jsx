@@ -32,7 +32,6 @@ const Login = ({ onLoginSuccess, onClose }) => {
         onLoginSuccess();
       }
     } catch (err) {
-      // Using the error message from the backend if available, otherwise fallback
       const errorMessage = err.response?.data?.message || "Invalid username or password";
       setError(errorMessage);
     } finally {
@@ -49,7 +48,6 @@ const Login = ({ onLoginSuccess, onClose }) => {
           <p className="form-subtitle">Provide secure credentials to enter map override mode</p>
         </div>
 
-        {/* Replaced manual error div with StatusDisplay */}
         {error && (
           <div style={{ marginBottom: '20px' }}>
             <StatusDisplay 

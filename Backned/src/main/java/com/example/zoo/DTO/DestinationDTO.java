@@ -19,5 +19,3 @@ public class DestinationDTO {
     private double x;
     private double y;
 }
-
-

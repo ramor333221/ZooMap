@@ -39,8 +39,8 @@ $accent-red: #ff4d4d;
       }
     }
 
-    // אלמנט הפעימה (Radar Pulse)
-    &::after {
+    // אלמנט הפעימה (Radar Pulse) מאוחד עם ה-Class מה-JSX
+    .radar-pulse, &::after {
       content: '';
       position: absolute;
       top: 50%;
@@ -53,6 +53,10 @@ $accent-red: #ff4d4d;
       z-index: 1;
       animation: pulse-ring 2s infinite ease-out;
       pointer-events: none;
+    }
+
+    .radar-pulse.active-pulse {
+      background: rgba($accent-red, 0.6);
     }
   }
 

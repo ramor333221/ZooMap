@@ -26,9 +26,7 @@ const ChatApp = () => {
                 console.log('✅ Chat Socket Connected! Session ID:', chatSessionId);
                 setConnected(true);
                 
-                // רישום לערוץ הדינמי הפרטי של המשתמש הנוכחי
                 client.subscribe('/user/queue/reply', (message) => {
-                    console.log("📬 הודעה חדשה הגיעה מה-AI:", message.body);
                     try {
                         const serverMessage = JSON.parse(message.body);
                         setMessages((prev) => [...prev, {
@@ -71,7 +69,6 @@ const ChatApp = () => {
 
         const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        // בניית האובייקט כולל ה-chatSessionId הייחודי
         const userMessage = {
             sender: 'user',
             text: inputMessage,
@@ -79,11 +76,9 @@ const ChatApp = () => {
             chatSessionId: chatSessionId
         };
 
-        // עדכון מקומי מיידי במסך של המשתמש בשביל חווית שימוש מהירה
         setMessages(prev => [...prev, { id: Date.now(), sender: 'user', text: inputMessage }]);
         setInputMessage('');
 
-        // שליחה ל-Controller של Spring Boot
         activeClient.publish({
             destination: '/app/chat',
             body: JSON.stringify(userMessage)

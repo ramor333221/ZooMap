@@ -5,14 +5,11 @@ export const WS_URL = `ws://${SERVER_IP}/ws-endpoint`;
 export const apiClient = async (endpoint, options = {}) => {
   const url = `${BASE_URL}${endpoint}`;
 
-  // If the body is an instance of FormData, the browser MUST set 
-  // the Content-Type automatically to include the boundary.
   const isFormData = options.body instanceof FormData;
 
   const defaultOptions = {
     ...options,
     headers: {
-      // Only set JSON header if it's NOT FormData
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     },

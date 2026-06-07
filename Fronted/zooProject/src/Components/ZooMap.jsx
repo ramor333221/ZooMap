@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { routeService } from '../Api/routeService';
 import { destinationService } from '../Api/destinationService';
 import { navigationService } from '../Api/navigationService';
-import StatusDisplay from './ErrorDisplay/StatusDisplay'; 
+import StatusDisplay from './ErrorDisplay/StatusDisplay';
 import RoutePath from './MapDesign/RoutePath';
 import DestinationPoint from './MapDesign/DestinationPoint';
 import DestinationSelector from './MapDesign/DestinationSelector';
-import MapEditorManager from './Editor/MapEditorManager'; 
-import Login from './Login/Login'; 
+import MapEditorManager from './Editor/MapEditorManager';
+import Login from './Login/Login';
 import Map3DView from './3DView/Map3DView';
 import ChatApp from './Chat/ChatApp';
 import '../Scss/App.scss';
@@ -26,9 +26,8 @@ const ZooMap = () => {
     const [isCalculating, setIsCalculating] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [viewMode, setViewMode] = useState('2D');
-    const [appStatus, setAppStatus] = useState(null); 
+    const [appStatus, setAppStatus] = useState(null);
 
-    // --- State Reset Logic for Admin Mode ---
     const toggleEditor = () => {
         if (!isEditorActive) {
             setSelectedTargets([]);
@@ -45,29 +44,29 @@ const ZooMap = () => {
     };
 
     const handleCalculateRoute = async () => {
-    if (selectedTargets.length < 2) {
-        setAppStatus({ type: 'warning', message: 'Please select at least 2 destinations.', isFatal: false });
-        return;
-    }
-    setIsCalculating(true);
-    setAppStatus(null);
-    
-    try {
-        const selectedDestinationObjects = destinations.filter(d => selectedTargets.includes(d.id));
-        const entranceNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('entrance'));
-        const exitNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('exit'));
+        if (selectedTargets.length < 2) {
+            setAppStatus({ type: 'warning', message: 'Please select at least 2 destinations.', isFatal: false });
+            return;
+        }
+        setIsCalculating(true);
+        setAppStatus(null);
 
-        const startId = entranceNode ? entranceNode.id : null;
-        const endId = exitNode ? exitNode.id : null;
-        const data = await navigationService.getOptimizedRoute(selectedTargets, startId, endId);
-        
-        setOptimizedRoute(data);
-    } catch (err) {
-        setAppStatus({ type: 'error', message: 'Unable to calculate route. Server unreachable.', isFatal: false });
-    } finally {
-        setIsCalculating(false);
-    }
-};
+        try {
+            const selectedDestinationObjects = destinations.filter(d => selectedTargets.includes(d.id));
+            const entranceNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('entrance'));
+            const exitNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('exit'));
+
+            const startId = entranceNode ? entranceNode.id : null;
+            const endId = exitNode ? exitNode.id : null;
+            const data = await navigationService.getOptimizedRoute(selectedTargets, startId, endId);
+
+            setOptimizedRoute(data);
+        } catch (err) {
+            setAppStatus({ type: 'error', message: 'Unable to calculate route. Server unreachable.', isFatal: false });
+        } finally {
+            setIsCalculating(false);
+        }
+    };
 
     const fetchMapData = async () => {
         setLoading(true);
@@ -152,7 +151,6 @@ const ZooMap = () => {
                                 isCalculating={isCalculating}
                             />
                         ) : (
-                            /* FIX: We provide a dedicated, stable div for the Portals */
                             <div className="admin-editor-sidebar-content">
                                 <div id="editor-sidebar-portal-root"></div>
                             </div>
@@ -209,9 +207,9 @@ const ZooMap = () => {
                                 <div className="map-background-image"><img src="./mapBackground.png" alt="Map Design" /></div>
                                 <div className="map-grid-overlay"></div>
 
-<svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">                                    {routes.map(route => (
-                                        <RoutePath key={`static-${route.id}`} route={route} isDimmed={!!optimizedRoute} />
-                                    ))}
+                                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">                                    {routes.map(route => (
+                                    <RoutePath key={`static-${route.id}`} route={route} isDimmed={!!optimizedRoute} />
+                                ))}
                                     {optimizedRoute && optimizedRoute.pathEdges.map((edge, index) => (
                                         <RoutePath key={`opt-${index}-${edge.id || 'edge'}`} route={edge} isOptimized={true} />
                                     ))}

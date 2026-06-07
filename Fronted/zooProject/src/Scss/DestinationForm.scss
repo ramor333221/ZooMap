@@ -21,7 +21,7 @@ $text-muted: #94a3b8;
   animation: slideInDownForm 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   margin-bottom: 35px;
 
-  // CHANGED: Converted horizontal row to vertical column stack to fit sidebar
+  // Vertical column stack to fit sidebar
   .controls-form-row {
     display: flex;
     flex-direction: column; 
@@ -44,7 +44,7 @@ $text-muted: #94a3b8;
     }
   }
 
-  // CHANGED: Items layout changed to vertical column block instead of flexing row items
+  // Items layout vertical column block
   .form-inputs-segment {
     display: flex;
     flex-direction: column; 
@@ -138,6 +138,28 @@ $text-muted: #94a3b8;
         background-color: rgba(255, 255, 255, 0.1);
         color: $text-main;
       }
+    }
+  }
+
+  // Added file thumbnail positioning rules
+  .file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    label.form-input {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .image-preview-thumb {
+      width: 28px;
+      height: 28px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid $border-color;
     }
   }
 }

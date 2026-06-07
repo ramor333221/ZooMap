@@ -88,7 +88,6 @@ const RouteUpdate = ({ destinations = [], onSaveSuccess }) => {
 
     return (
         <g className="route-update-layer">
-            {/* 1. Map Paths Render */}
             {localRoutes.map(route => {
                 if (!route.bodyPoints || route.bodyPoints.length < 2) return null;
                 const pathData = route.bodyPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
@@ -109,14 +108,12 @@ const RouteUpdate = ({ destinations = [], onSaveSuccess }) => {
                 );
             })}
 
-            {/* 2. Click Capture Area */}
             <rect 
                 width="100" height="100" fill="transparent" 
                 onMouseDown={handleMapClick}
                 style={{ cursor: routeId ? 'crosshair' : 'default', pointerEvents: routeId ? 'all' : 'none' }} 
             />
 
-            {/* 3. Preview of new path being drawn */}
             {bodyPoints.length > 0 && (
                 <path 
                     d={bodyPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
@@ -124,7 +121,6 @@ const RouteUpdate = ({ destinations = [], onSaveSuccess }) => {
                 />
             )}
 
-            {/* 4. Separated UI Form Component */}
             <RouteUpdateForm 
                 routeId={routeId}
                 localRoutes={localRoutes}

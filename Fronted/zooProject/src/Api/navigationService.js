@@ -2,17 +2,17 @@ import { apiClient } from './apiClient';
 
 export const navigationService = {
   
-  // שליפת כל היעדים להצגה (מתאים ל-GET /destinations)
+
   getAllDestinations: () => apiClient('/v1/public/destinations'),
 
   /**
    * חישוב מסלול אופטימלי (מתאים ל-POST /route)
-   * @param {Array<number>} selectedIds - רשימת מזהי הנקודות
-   * @param {number} startId - מזהה נקודת התחלה (אופציונלי)
-   * @param {number} endId - מזהה נקודת סיום (אופציונלי)
+   * @param {Array<number>} selectedIds
+   * @param {number} startId
+   * @param {number} endId 
    */
   getOptimizedRoute: (selectedIds, startId = null, endId = null) => {
-    // בניית ה-Query Parameters עבור startId ו-endId
+
     let queryParams = '';
     if (startId || endId) {
       const params = new URLSearchParams();
@@ -23,7 +23,7 @@ export const navigationService = {
 
     return apiClient(`/v1/public/bestRoute${queryParams}`, {
       method: 'POST',
-      body: JSON.stringify(selectedIds), // שולח את רשימת ה-IDs כפי שהשרת מצפה
+      body: JSON.stringify(selectedIds),
     });
   }
 };

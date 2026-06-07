@@ -3,15 +3,11 @@ package com.example.zoo.Entities;
 import javax.persistence.*;
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @ToString
 @Builder
-
 @Entity
 public class Destination {
 
@@ -19,6 +15,8 @@ public class Destination {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
+
+    // הורדנו את ה-Lob וה-LONGTEXT. עכשיו זה שדה טקסט רגיל במפרט ה-DB
     private String picUrl;
     private String description;
     private CategoryType category;
@@ -30,6 +28,6 @@ public class Destination {
         this.picUrl = picUrl;
         this.description = description;
         this.category = category;
-        this.location = new Point(x,y);
+        this.location = new Point(x, y);
     }
 }

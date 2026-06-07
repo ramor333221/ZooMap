@@ -12,4 +12,8 @@ public class ZooApplication {
 		SpringApplication.run(ZooApplication.class, args);
 	}
 
+	@Bean
+	public BCryptPasswordEncoder bCryptPasswordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 }

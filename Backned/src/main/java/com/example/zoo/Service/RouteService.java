@@ -2,6 +2,8 @@ package com.example.zoo.Service;
 
 import com.example.zoo.DTO.RouteDTO;
 import com.example.zoo.Entities.Route;
+import com.example.zoo.Entities.Destination;
+import com.example.zoo.Entities.Point;
 import com.example.zoo.Exceptions.AppExceptions; // ייבוא קובץ החריגות המרכזי
 import com.example.zoo.Repositories.RouteRepo;
 import com.example.zoo.Repositories.DestinationRepo;
@@ -12,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,6 +32,42 @@ public class RouteService {
         this.navigationService = navigationService;
     }
 
+    // --- מתודת עזר פרטית לחישוב המרחק הגיאומטרי האמיתי על המפה ---
+    private double calculateRealDistance(int fromId, int toId, List<Point> bodyPoints) {
+        Destination fromDest = destinationRepo.findById(fromId)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFound("Origin destination not found with id: " + fromId));
+        Destination toDest = destinationRepo.findById(toId)
+                .orElseThrow(() -> new AppExceptions.ResourceNotFound("Target destination not found with id: " + toId));
+
+        // בניית רשימה זמנית שמחברת כרונולוגית את כל המסלול: מוצא -> נקודות פיתול -> יעד
+        List<Point> allPoints = new ArrayList<>();
+
+        if (fromDest.getLocation() != null) {
+            allPoints.add(fromDest.getLocation());
+        }
+        if (bodyPoints != null) {
+            allPoints.addAll(bodyPoints);
+        }
+        if (toDest.getLocation() != null) {
+            allPoints.add(toDest.getLocation());
+        }
+
+        double totalDistance = 0;
+
+        // לולאה שמחשבת את מרחק קטעי הקו המצטברים (נוסחת פיתגורס)
+        for (int i = 0; i < allPoints.size() - 1; i++) {
+            Point p1 = allPoints.get(i);
+            Point p2 = allPoints.get(i + 1);
+
+            if (p1 != null && p2 != null) {
+                totalDistance += Math.sqrt(Math.pow(p2.getX() - p1.getX(), 2) + Math.pow(p2.getY() - p1.getY(), 2));
+            }
+        }
+
+        // עיגול ל-2 ספרות אחרי הנקודה העשרונית לטובת סדר ודיוק ב-DB
+        return Math.round(totalDistance * 100.0) / 100.0;
+    }
+
     @Transactional(readOnly = true)
     public List<Route> getAll() {
         List<Route> list = routeRepo.findAll();
@@ -40,8 +79,11 @@ public class RouteService {
 
     @Transactional
     public Route addRoute(RouteDTO dto) {
+        // חישוב המרחק האמיתי מתבצע כעת כאן בשרת באופן אוטומטי
+        double computedDist = calculateRealDistance(dto.getFromD(), dto.getToD(), dto.getBodyPoints());
+
         Route newRoute = routeRepo.save(Route.builder()
-                .dist(dto.getDist())
+                .dist(computedDist) // דריסת המרחק והזרקת החישוב המדויק
                 .fromD(dto.getFromD())
                 .toD(dto.getToD())
                 .bodyPoints(dto.getBodyPoints())
@@ -70,9 +112,12 @@ public class RouteService {
             }
         }
 
+        // חישוב מחדש של המרחק בעקבות שינוי פיתולי הדרך (bodyPoints)
+        double computedDist = calculateRealDistance(dto.getFromD(), dto.getToD(), dto.getBodyPoints());
+
         existingRoute.setFromD(dto.getFromD());
         existingRoute.setToD(dto.getToD());
-        existingRoute.setDist(dto.getDist());
+        existingRoute.setDist(computedDist); // החלפת המרחק הישן במרחק המחושב החדש
         existingRoute.setBodyPoints(dto.getBodyPoints());
 
         Route updatedRoute = routeRepo.save(existingRoute);
