@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import '../../Scss/DestinationPoint.scss'; 
 import StatusDisplay from '.././ErrorDisplay/StatusDisplay'; 
-import { BASE_URL } from '../../Api/apiClient';
+import { BASE_URL } from '../../Api/apiSlice';
+
 
 const DestinationPoint = ({ destination, isEditorActive, isSelected, onClick }) => {
   const [showInfo, setShowInfo] = useState(false);
@@ -15,7 +16,7 @@ const DestinationPoint = ({ destination, isEditorActive, isSelected, onClick }) 
   const posY = destination.location?.y ?? destination.y;
 
   const serverHost = BASE_URL.replace('/api', '');
-  const imageSrc = `${serverHost}${destination.picUrl.startsWith('/') ? '' : '/'}${destination.picUrl}`;
+  const imageSrc = `${serverHost}${destination.picUrl?.startsWith('/') ? '' : '/'}${destination.picUrl || ''}`;
 
   const pointStyle = {
     left: `${posX}%`,

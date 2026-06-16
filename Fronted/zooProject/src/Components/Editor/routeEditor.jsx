@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { routeService } from '../../Api/routeService';
-import RouteUpdate from './routeUpdate'; 
-import RouteDelete from './RouteDelete'; // Added import for Delete component
+import { useAddRouteMutation } from '../../Api/routeApi';
+import RouteUpdate from './RouteUpdate';
+import RouteDelete from './RouteDelete';
 
 const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
     const [isDrawing, setIsDrawing] = useState(false);
     const [points, setPoints] = useState([]);
     const [fromId, setFromId] = useState(null);
 
+    const [addRoute] = useAddRouteMutation();
 
     const reset = () => {
         setIsDrawing(false);
@@ -15,12 +16,12 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
         setFromId(null);
     };
 
-
     const handleCanvasClick = (e) => {
         if (!isDrawing || action !== 'create') return;
 
         const svg = e.currentTarget.closest('svg');
         const rect = svg.getBoundingClientRect();
+
         const x = parseFloat((((e.clientX - rect.left) / rect.width) * 100).toFixed(2));
         const y = parseFloat((((e.clientY - rect.top) / rect.height) * 100).toFixed(2));
 
@@ -30,7 +31,7 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
     const handleNodeClick = (e, dest) => {
         if (action !== 'create') return;
         e.stopPropagation();
-        
+
         const x = dest.location?.x ?? dest.x;
         const y = dest.location?.y ?? dest.y;
 
@@ -46,22 +47,23 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
 
     const saveRoute = async (toId, lastX, lastY) => {
         const finalPoints = [...points, { x: lastX, y: lastY }];
+
         try {
-            await routeService.addRoute({
+            await addRoute({
                 fromD: fromId,
                 toD: toId,
                 bodyPoints: finalPoints,
                 dist: 0
-            });
+            }).unwrap();
+
             alert("Route saved successfully!");
-            onSaveSuccess();
+            onSaveSuccess?.();
         } catch (err) {
-            console.error(err);
-            alert("Error trying to save the route.");
+            alert("Error trying to save the route: " + (err?.data?.message || err.message));
         }
+
         reset();
     };
-
 
     const activeRoutePreviewColor = "#38bdf8";
     const sourceNodeActiveColor = "#10b981";
@@ -69,32 +71,29 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
 
     return (
         <g className="route-editor-container">
-            
 
             {action === 'update' && (
-                <RouteUpdate 
-                    destinations={destinations} 
-                    onSaveSuccess={onSaveSuccess} 
+                <RouteUpdate
+                    destinations={destinations}
+                    onSaveSuccess={onSaveSuccess}
                 />
             )}
-
 
             {action === 'delete' && (
-                <RouteDelete 
-                    destinations={destinations} 
-                    onDeletionSuccess={onSaveSuccess} 
+                <RouteDelete
+                    destinations={destinations}
+                    onDeletionSuccess={onSaveSuccess}
                 />
             )}
 
-
             {action === 'create' && (
-                <g style={{ pointerEvents: 'all' }} className="route-create-overlay">
+                <g className="route-create-overlay" style={{ pointerEvents: 'all' }}>
                     <rect
                         width="100"
                         height="100"
                         fill="transparent"
                         onMouseDown={handleCanvasClick}
-                        style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                        style={{ cursor: 'crosshair' }}
                     />
 
                     {isDrawing && (
@@ -102,11 +101,9 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
                             points={points.map(p => `${p.x},${p.y}`).join(' ')}
                             fill="none"
                             stroke={activeRoutePreviewColor}
-                            className="editor-path-preview"
                             strokeDasharray="1.5,1"
                             style={{
-                                filter: 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.45))',
-                                transition: 'stroke 0.3s ease'
+                                filter: 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.45))'
                             }}
                         />
                     )}
@@ -117,38 +114,30 @@ const RouteEditor = ({ destinations, action, onSaveSuccess }) => {
                         const isActiveSource = fromId === d.id;
 
                         return (
-                            <g key={d.id} className={`editor-node-anchor ${isActiveSource ? 'active-source' : ''}`}>
+                            <g key={d.id}>
                                 <circle
                                     cx={nodeX}
                                     cy={nodeY}
                                     r="4.5"
                                     fill="transparent"
                                     stroke={isActiveSource ? sourceNodeActiveColor : "rgba(244, 63, 94, 0.4)"}
-                                    strokeWidth="0.5"
                                     opacity={isActiveSource ? 0.8 : 0}
-                                    style={{
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        transformOrigin: `${nodeX}px ${nodeY}px`,
-                                    }}
                                 />
+
                                 <circle
                                     cx={nodeX}
                                     cy={nodeY}
                                     r="2.5"
                                     fill={isActiveSource ? sourceNodeActiveColor : destinationNodeColor}
                                     onMouseDown={(e) => handleNodeClick(e, d)}
-                                    style={{
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        filter: isActiveSource ? `drop-shadow(0 0 5px ${sourceNodeActiveColor})` : 'none'
-                                    }}
+                                    style={{ cursor: 'pointer' }}
                                 />
                             </g>
                         );
                     })}
                 </g>
             )}
+
         </g>
     );
 };

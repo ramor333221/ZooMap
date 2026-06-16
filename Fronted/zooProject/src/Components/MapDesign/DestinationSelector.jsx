@@ -1,5 +1,6 @@
 import React from 'react';
-import '../../Scss/DestinationSelector.scss'; // Link to modular sidebar layout styles
+import '../../Scss/DestinationSelector.scss';
+
 
 const DestinationSelector = ({ destinations, selectedTargets, onToggle, onCalculate, isCalculating }) => {
     return (
@@ -9,7 +10,6 @@ const DestinationSelector = ({ destinations, selectedTargets, onToggle, onCalcul
                 <p>Select the exhibits and animal habitats you would like to visit:</p>
             </div>
             
-            {/* Scrollable list of zoo destinations */}
             <div className="targets-list">
                 {destinations.map(dest => {
                     const isChecked = selectedTargets.includes(dest.id);
@@ -33,7 +33,6 @@ const DestinationSelector = ({ destinations, selectedTargets, onToggle, onCalcul
                 })}
             </div>
 
-            {/* Premium, action-driven CTA button */}
             <button 
                 className="calculate-btn"
                 disabled={selectedTargets.length < 2 || isCalculating}

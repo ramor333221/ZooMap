@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { routeService } from '../Api/routeService';
-import { destinationService } from '../Api/destinationService';
-import { navigationService } from '../Api/navigationService';
+import { useGetAllRoutesQuery } from '../Api/routeApi';
+import { useGetAllDestinationsQuery } from '../Api/destinationApi';
+import { useGetOptimizedRouteMutation } from '../Api/navigationApi';
+
 import StatusDisplay from './ErrorDisplay/StatusDisplay';
 import RoutePath from './MapDesign/RoutePath';
 import DestinationPoint from './MapDesign/DestinationPoint';
@@ -10,23 +11,38 @@ import MapEditorManager from './Editor/MapEditorManager';
 import Login from './Login/Login';
 import Map3DView from './3DView/Map3DView';
 import ChatApp from './Chat/ChatApp';
+
 import '../Scss/App.scss';
 import '../Scss/LoginModal.scss';
 import '../Scss/Route.scss';
 
-
 const ZooMap = () => {
-    const [routes, setRoutes] = useState([]);
-    const [destinations, setDestinations] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { 
+        data: routes = [], 
+        isLoading: isRoutesLoading, 
+        error: routesError, 
+        refetch: refetchRoutes 
+    } = useGetAllRoutesQuery();
+
+    const { 
+        data: destinations = [], 
+        isLoading: isDestinationsLoading, 
+        error: destinationsError, 
+        refetch: refetchDestinations 
+    } = useGetAllDestinationsQuery();
+
+    const [getOptimizedRoute, { isLoading: isCalculating }] = useGetOptimizedRouteMutation();
+
     const [isAdmin, setIsAdmin] = useState(false);
     const [isEditorActive, setIsEditorActive] = useState(false);
     const [selectedTargets, setSelectedTargets] = useState([]);
     const [optimizedRoute, setOptimizedRoute] = useState(null);
-    const [isCalculating, setIsCalculating] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [viewMode, setViewMode] = useState('2D');
     const [appStatus, setAppStatus] = useState(null);
+
+    const loading = isRoutesLoading || isDestinationsLoading;
+    const hasFetchError = routesError || destinationsError;
 
     const toggleEditor = () => {
         if (!isEditorActive) {
@@ -38,6 +54,7 @@ const ZooMap = () => {
 
     const toggleTarget = (id) => {
         if (optimizedRoute) setOptimizedRoute(null);
+
         setSelectedTargets(prev =>
             prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
         );
@@ -45,59 +62,71 @@ const ZooMap = () => {
 
     const handleCalculateRoute = async () => {
         if (selectedTargets.length < 2) {
-            setAppStatus({ type: 'warning', message: 'Please select at least 2 destinations.', isFatal: false });
+            setAppStatus({
+                type: 'warning',
+                message: 'Please select at least 2 destinations.',
+                isFatal: false
+            });
             return;
         }
-        setIsCalculating(true);
+
         setAppStatus(null);
 
         try {
-            const selectedDestinationObjects = destinations.filter(d => selectedTargets.includes(d.id));
-            const entranceNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('entrance'));
-            const exitNode = selectedDestinationObjects.find(d => d.name.toLowerCase().includes('exit'));
+            const selectedDestinationObjects = destinations.filter(d =>
+                selectedTargets.includes(d.id)
+            );
+
+            const entranceNode = selectedDestinationObjects.find(d =>
+                d.name?.toLowerCase().includes('entrance')
+            );
+
+            const exitNode = selectedDestinationObjects.find(d =>
+                d.name?.toLowerCase().includes('exit')
+            );
 
             const startId = entranceNode ? entranceNode.id : null;
             const endId = exitNode ? exitNode.id : null;
-            const data = await navigationService.getOptimizedRoute(selectedTargets, startId, endId);
+
+            const data = await getOptimizedRoute({
+                selectedIds: selectedTargets,
+                startId,
+                endId
+            }).unwrap();
 
             setOptimizedRoute(data);
         } catch (err) {
-            setAppStatus({ type: 'error', message: 'Unable to calculate route. Server unreachable.', isFatal: false });
-        } finally {
-            setIsCalculating(false);
+            setAppStatus({
+                type: 'error',
+                message: 'Unable to calculate route. Server unreachable.',
+                isFatal: false
+            });
         }
     };
 
-    const fetchMapData = async () => {
-        setLoading(true);
+    const handleRetryFetch = () => {
         setAppStatus(null);
-        try {
-            const [rData, dData] = await Promise.all([
-                routeService.getAllRoutes(),
-                destinationService.getAllDestinations()
-            ]);
-            setRoutes(rData);
-            setDestinations(dData);
-        } catch (err) {
-            setAppStatus({ type: 'error', message: 'Failed to load map data. Server unreachable.', isFatal: true });
-        } finally {
-            setLoading(false);
-        }
+        refetchRoutes();
+        refetchDestinations();
     };
 
     const checkAdminAuth = () => {
-        const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-        if (token) {
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                if (payload.role === 'Admin') setIsAdmin(true);
-            } catch (e) { setIsAdmin(false); }
+        const token =
+            localStorage.getItem('token') ||
+            localStorage.getItem('auth_token');
+
+        if (!token) return;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload.role === 'Admin') setIsAdmin(true);
+        } catch {
+            setIsAdmin(false);
         }
     };
 
     useEffect(() => {
         checkAdminAuth();
-        fetchMapData();
     }, []);
 
     const handleLoginSuccess = () => {
@@ -113,18 +142,22 @@ const ZooMap = () => {
         setIsEditorActive(false);
     };
 
-    if (loading && !appStatus) {
+    if (loading && !appStatus && !hasFetchError) {
         return (
-            <div className="map-loader-container" style={{ backgroundColor: 'black', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <div className="futuristic-spinner"></div>
+            <div className="map-loader-container">
+                <div className="futuristic-spinner" />
             </div>
         );
     }
 
-    if (appStatus?.isFatal) {
+    if (hasFetchError || appStatus?.isFatal) {
         return (
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'black' }}>
-                <StatusDisplay type="error" message={appStatus.message} onRetry={fetchMapData} />
+            <div className="fatal-error-screen">
+                <StatusDisplay
+                    type="error"
+                    message={appStatus?.message || 'Failed to load map data'}
+                    onRetry={handleRetryFetch}
+                />
             </div>
         );
     }
@@ -134,13 +167,6 @@ const ZooMap = () => {
             <div className={`zoo-app-layout ${isEditorActive ? 'admin-editor-active' : ''}`}>
                 <aside className="app-sidebar">
                     <div className="sidebar-scrollable-container">
-                        <div className="brand-header">
-                            <span className="brand-logo">🦁</span>
-                            <div className="brand-title">
-                                <h2>ZooNavigator</h2>
-                                <span>Interactive Mapping</span>
-                            </div>
-                        </div>
 
                         {!isEditorActive ? (
                             <DestinationSelector
@@ -151,98 +177,100 @@ const ZooMap = () => {
                                 isCalculating={isCalculating}
                             />
                         ) : (
-                            <div className="admin-editor-sidebar-content">
-                                <div id="editor-sidebar-portal-root"></div>
-                            </div>
+                            <div className="admin-editor-sidebar-content" />
                         )}
 
                         {optimizedRoute && (
                             <div className="navigation-panel">
-                                <div className="panel-header">
-                                    <span className="badge">FASTEST PATH</span>
-                                    <h3>Route ({optimizedRoute.totalDistance.toFixed(1)} m)</h3>
-                                </div>
-                                <div className="steps-container">
-                                    {optimizedRoute.stops.map((stop, index) => (
-                                        <div key={index} className="step-item">
-                                            <span className="step-badge">{index + 1}</span>
-                                            <span className="step-name">{stop.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                                <h3>
+                                    Route ({optimizedRoute.totalDistance?.toFixed(1)} m)
+                                </h3>
+
+                                {optimizedRoute.stops?.map((stop, i) => (
+                                    <div key={i} className="step-item">
+                                        <span>{i + 1}</span>
+                                        <span>{stop.name}</span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
 
                     <div className="sidebar-footer">
                         {isAdmin ? (
-                            <div className="admin-controls-stack">
-                                <button className={`btn-admin-panel ${isEditorActive ? 'active' : ''}`} onClick={toggleEditor}>
-                                    🛡️ {isEditorActive ? "Exit Editor" : "Admin Panel"}
+                            <>
+                                <button onClick={() => setIsEditorActive(v => !v)}>
+                                    {isEditorActive ? 'Exit Editor' : 'Admin Panel'}
                                 </button>
-                                <button className="btn-logout" onClick={handleLogout}>Sign Out</button>
-                            </div>
+                                <button onClick={handleLogout}>Sign Out</button>
+                            </>
                         ) : (
-                            <button className="btn-admin-login-trigger" onClick={() => setShowLoginModal(true)}>
-                                🔑 Admin Login
+                            <button onClick={() => setShowLoginModal(true)}>
+                                Admin Login
                             </button>
                         )}
                     </div>
                 </aside>
 
                 <div className="center-viewport-container">
-                    {appStatus && !appStatus.isFatal && (
-                        <StatusDisplay type={appStatus.type} message={appStatus.message} onRetry={appStatus.type === 'error' ? fetchMapData : null} />
-                    )}
 
                     <div className="view-mode-controls">
-                        <button className={`btn-view ${viewMode === '2D' ? 'active' : ''}`} onClick={() => setViewMode('2D')}>🗺️ 2D Map</button>
-                        <button className={`btn-view ${viewMode === '3D' ? 'active' : ''}`} onClick={() => setViewMode('3D')}>🧊 3D Simulation</button>
+                        <button onClick={() => setViewMode('2D')}>2D</button>
+                        <button onClick={() => setViewMode('3D')}>3D</button>
                     </div>
 
                     <main className="zoo-map-main-area">
+
                         {viewMode === '2D' ? (
-                            <div className="map-viewport">
-                                <div className="map-terrain-base"></div>
-                                <div className="map-background-image"><img src="./mapBackground.png" alt="Map Design" /></div>
-                                <div className="map-grid-overlay"></div>
+                            <svg className="map-svg-layer" viewBox="0 0 100 100">
 
-                                <svg className="map-svg-layer" viewBox="0 0 100 100" preserveAspectRatio="none">                                    {routes.map(route => (
-                                    <RoutePath key={`static-${route.id}`} route={route} isDimmed={!!optimizedRoute} />
+                                {routes.map(route => (
+                                    <RoutePath key={route.id} route={route} />
                                 ))}
-                                    {optimizedRoute && optimizedRoute.pathEdges.map((edge, index) => (
-                                        <RoutePath key={`opt-${index}-${edge.id || 'edge'}`} route={edge} isOptimized={true} />
-                                    ))}
-                                    {isAdmin && isEditorActive && (
-                                        <MapEditorManager destinations={destinations} onSaveSuccess={fetchMapData} />
-                                    )}
-                                </svg>
 
-                                <div className="map-markers-layer">
-                                    {destinations.map(dest => (
-                                        <DestinationPoint
-                                            key={dest.id}
-                                            destination={dest}
-                                            isEditorActive={isEditorActive}
-                                            isSelected={selectedTargets.includes(dest.id)}
-                                            onClick={() => !isEditorActive && toggleTarget(dest.id)}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                                {optimizedRoute?.pathEdges?.map((edge, i) => (
+                                    <RoutePath key={i} route={edge} isOptimized />
+                                ))}
+
+                                {isAdmin && isEditorActive && (
+                                    <MapEditorManager
+                                        destinations={destinations}
+                                        onSaveSuccess={handleRetryFetch}
+                                    />
+                                )}
+                            </svg>
                         ) : (
-                            <Map3DView routes={routes} destinations={destinations} optimizedRoute={optimizedRoute} />
+                            <Map3DView
+                                routes={routes}
+                                destinations={destinations}
+                                optimizedRoute={optimizedRoute}
+                            />
                         )}
+
+                        <div className="map-markers-layer">
+                            {destinations.map(dest => (
+                                <DestinationPoint
+                                    key={dest.id}
+                                    destination={dest}
+                                    isSelected={selectedTargets.includes(dest.id)}
+                                    onClick={() => toggleTarget(dest.id)}
+                                />
+                            ))}
+                        </div>
+
                     </main>
                 </div>
+
                 <ChatApp />
             </div>
 
             {showLoginModal && (
-                <div className="login-modal-overlay" onClick={() => setShowLoginModal(false)}>
-                    <div className="login-card" onClick={(e) => e.stopPropagation()}>
-                        <button className="close-modal-btn" onClick={() => setShowLoginModal(false)}>×</button>
-                        <Login onLoginSuccess={handleLoginSuccess} onClose={() => setShowLoginModal(false)} />
+                <div
+                    className="login-modal-overlay"
+                    onClick={() => setShowLoginModal(false)}
+                >
+                    <div onClick={e => e.stopPropagation()}>
+                        <Login onLoginSuccess={handleLoginSuccess} />
                     </div>
                 </div>
             )}

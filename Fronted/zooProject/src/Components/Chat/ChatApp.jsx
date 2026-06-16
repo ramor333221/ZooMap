@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import ReactMarkdown from 'react-markdown';
-import { WS_URL } from '../../Api/apiClient';
+import { WS_URL } from '../../Api/apiSlice';
+
 
 const ChatApp = () => {
     const [connected, setConnected] = useState(false);

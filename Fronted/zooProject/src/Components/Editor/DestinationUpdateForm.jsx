@@ -1,179 +1,236 @@
-import React, { useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import DestinationForm from './DestinationUpdateForm';
+import {
+    useAddDestinationMutation,
+    useUpdateDestinationMutation
+} from '../../Api/destinationApi';
 
-const DestinationUpdateForm = ({ formData, setFormData, categories, handleSubmit, loading, onCancel }) => {
-    const fileInputRef = useRef(null);
+const DestinationEditor = ({ destinations = [], action, onSaveSuccess }) => {
+    const [showForm, setShowForm] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+    const [addDestination, { isLoading: isAdding }] = useAddDestinationMutation();
+    const [updateDestination, { isLoading: isUpdatingApi }] = useUpdateDestinationMutation();
+
+    const loading = isAdding || isUpdatingApi;
+
+    const categories = [
+        "CAGES",
+        "PICNIC_AREA",
+        "AMENITIES",
+        "TRAIL_SPLIT",
+        "ENTRANCE",
+        "EXIT",
+        "PARKING"
+    ];
+
+    const [formData, setFormData] = useState({
+        id: null,
+        name: '',
+        category: 'CAGES',
+        description: '',
+        picUrl: '',
+        x: 0,
+        y: 0,
+        imageFile: null
+    });
+
+    const handleClose = () => {
+        setFormData({
+            id: null,
+            name: '',
+            category: 'CAGES',
+            description: '',
+            picUrl: '',
+            x: 0,
+            y: 0,
+            imageFile: null
+        });
+        setShowForm(false);
+        setIsUpdating(false);
     };
 
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setFormData(prev => ({ ...prev, imageFile: e.target.files[0] }));
+    useEffect(() => {
+        handleClose();
+    }, [action]);
+
+    const handleMapClick = (e) => {
+        if (action !== 'create') return;
+
+        const svg = e.currentTarget.closest('svg');
+        const rect = svg.getBoundingClientRect();
+
+        setFormData(prev => ({
+            ...prev,
+            id: null,
+            x: parseFloat((((e.clientX - rect.left) / rect.width) * 100).toFixed(2)),
+            y: parseFloat((((e.clientY - rect.top) / rect.height) * 100).toFixed(2))
+        }));
+
+        setIsUpdating(false);
+        setShowForm(true);
+    };
+
+    const loadDestinationForEditing = (dest) => {
+        if (!dest) return;
+
+        setFormData({
+            id: dest.id,
+            name: dest.name || '',
+            category: dest.category || 'CAGES',
+            description: dest.description || '',
+            picUrl: dest.picUrl || '',
+            x: dest.location?.x ?? dest.x,
+            y: dest.location?.y ?? dest.y
+        });
+
+        setIsUpdating(true);
+        setShowForm(true);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            const payload = new FormData();
+
+            const dto = {
+                name: formData.name,
+                category: formData.category,
+                description: formData.description,
+                x: parseFloat(formData.x),
+                y: parseFloat(formData.y)
+            };
+
+            payload.append(
+                'destination',
+                new Blob([JSON.stringify(dto)], { type: 'application/json' })
+            );
+
+            if (formData.imageFile) {
+                payload.append('file', formData.imageFile);
+            }
+
+            if (isUpdating) {
+                await updateDestination({
+                    id: formData.id,
+                    formData: payload
+                }).unwrap();
+            } else {
+                await addDestination(payload).unwrap();
+            }
+
+            onSaveSuccess?.();
+            handleClose();
+        } catch (err) {
+            alert("Error saving destination: " + (err?.data?.message || err.message));
         }
     };
 
-    const triggerFileSelect = () => fileInputRef.current.click();
+    const mountNode = document.querySelector('.app-sidebar') || document.body;
 
     return (
-        <form onSubmit={handleSubmit} style={formContainerStyle}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: '600', color: '#38bdf8' }}>
-                {formData.id ? 'Edit Destination' : 'Create New Destination'}
-            </h3>
+        <g className="destination-editor-layer">
+            {action === 'create' && (
+                <rect
+                    width="100"
+                    height="100"
+                    fill="transparent"
+                    onMouseDown={handleMapClick}
+                    style={{ cursor: 'crosshair' }}
+                />
+            )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {/* Coordinates Info */}
-                <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: '#94a3b8', marginBottom: '2px' }}>
-                    <span>X: <strong>{formData.x}%</strong></span>
-                    <span>Y: <strong>{formData.y}%</strong></span>
-                </div>
+            {action === 'update' &&
+                destinations.map(dest => {
+                    const x = dest.location?.x ?? dest.x;
+                    const y = dest.location?.y ?? dest.y;
+                    const isSelected = formData.id === dest.id;
 
-                {/* Name */}
-                <div>
-                    <label style={labelStyle}>Name</label>
-                    <input 
-                        style={inputStyle}
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="e.g. Lion's Gate"
-                        required
-                    />
-                </div>
+                    return (
+                        <g
+                            key={dest.id}
+                            onClick={() => loadDestinationForEditing(dest)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <circle cx={x} cy={y} r="5" fill="transparent" />
+                            {isSelected && (
+                                <circle
+                                    cx={x}
+                                    cy={y}
+                                    r="3.5"
+                                    fill="none"
+                                    stroke="#0ea5e9"
+                                    strokeWidth="0.6"
+                                />
+                            )}
+                            <circle
+                                cx={x}
+                                cy={y}
+                                r="2.2"
+                                fill={isSelected ? "#0ea5e9" : "#eab308"}
+                                stroke="#fff"
+                                strokeWidth="0.4"
+                            />
+                        </g>
+                    );
+                })}
 
-                {/* Category */}
-                <div>
-                    <label style={labelStyle}>Category</label>
-                    <select style={inputStyle} name="category" value={formData.category} onChange={handleChange}>
-                        {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
-                        ))}
-                    </select>
-                </div>
+            {ReactDOM.createPortal(
+                <div style={{ position: 'relative', top: '-10px', padding: '0 10px' }}>
+                    {action === 'update' && !showForm && (
+                        <div style={{
+                            padding: '15px',
+                            background: '#1e293b',
+                            borderRadius: '12px',
+                            border: '1px solid #334155',
+                            marginBottom: '50px'
+                        }}>
+                            <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#fff' }}>
+                                ✏️ Edit Destination
+                            </h3>
 
-                {/* Description */}
-                <div>
-                    <label style={labelStyle}>Description</label>
-                    <textarea 
-                        style={{ ...inputStyle, minHeight: '45px', resize: 'vertical' }}
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        placeholder="Short description..."
-                    />
-                </div>
-
-                {/* Custom Image Upload */}
-                <div style={{ marginTop: '2px' }}>
-                    <label style={labelStyle}>Image</label>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef}
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                    />
-                    <button 
-                        type="button"
-                        onClick={triggerFileSelect}
-                        style={fileBtnStyle}
-                        onMouseOver={(e) => e.currentTarget.style.borderColor = '#475569'}
-                        onMouseOut={(e) => e.currentTarget.style.borderColor = '#334155'}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                            <span style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {formData.imageFile ? formData.imageFile.name : 'Choose folder...'}
-                            </span>
+                            <select
+                                onChange={(e) =>
+                                    loadDestinationForEditing(
+                                        destinations.find(d => d.id === parseInt(e.target.value))
+                                    )
+                                }
+                                style={{
+                                    width: '100%',
+                                    padding: '8px',
+                                    background: '#0f172a',
+                                    color: '#fff',
+                                    border: '1px solid #475569',
+                                    borderRadius: '6px'
+                                }}
+                            >
+                                <option value="">-- Select from list --</option>
+                                {destinations.map(d => (
+                                    <option key={d.id} value={d.id}>
+                                        {d.name || `ID: ${d.id}`}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                    </button>
-                </div>
+                    )}
 
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <button type="submit" disabled={loading} style={saveBtnStyle}>
-                        {loading ? '...' : 'Save'}
-                    </button>
-                    <button type="button" onClick={onCancel} style={cancelBtnStyle}>
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </form>
+                    {showForm && (
+                        <DestinationForm
+                            formData={formData}
+                            setFormData={setFormData}
+                            categories={categories}
+                            handleSubmit={handleSubmit}
+                            loading={loading}
+                            onCancel={handleClose}
+                        />
+                    )}
+                </div>,
+                mountNode
+            )}
+        </g>
     );
 };
 
-// --- Updated Styles for "Shorter" look ---
-
-const formContainerStyle = {
-    background: '#1e293b',
-    padding: '14px 18px', // Reduced vertical padding
-    borderRadius: '10px',
-    border: '1px solid #334155',
-    color: '#f8fafc',
-    fontFamily: 'Inter, system-ui, sans-serif',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-    marginBottom: '45px' // Requested margin
-};
-
-const labelStyle = { 
-    display: 'block', 
-    fontSize: '10px', // Smaller labels
-    fontWeight: '700', 
-    textTransform: 'uppercase', 
-    color: '#64748b', 
-    marginBottom: '3px', 
-    letterSpacing: '0.025em' 
-};
-
-const inputStyle = { 
-    width: '100%', 
-    padding: '7px 10px', // Thinner inputs
-    background: '#0f172a', 
-    color: '#fff', 
-    border: '1px solid #334155', 
-    borderRadius: '5px', 
-    outline: 'none', 
-    fontSize: '13px' 
-};
-
-const fileBtnStyle = {
-    width: '100%',
-    padding: '6px 10px', // Thinner file button
-    background: '#0f172a',
-    color: '#94a3b8',
-    border: '1px dashed #334155',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    transition: 'border-color 0.2s'
-};
-
-const saveBtnStyle = {
-    flex: 2, 
-    background: '#0ea5e9', 
-    color: 'white', 
-    border: 'none',
-    padding: '10px', 
-    borderRadius: '5px', 
-    fontWeight: '600', 
-    cursor: 'pointer',
-    fontSize: '13px'
-};
-
-const cancelBtnStyle = {
-    flex: 1, 
-    background: 'transparent', 
-    color: '#f43f5e', 
-    border: '1px solid #f43f5e',
-    padding: '10px', 
-    borderRadius: '5px', 
-    cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '13px'
-};
-
-export default DestinationUpdateForm;
+export default DestinationEditor;

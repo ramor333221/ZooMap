@@ -1,38 +1,65 @@
-import React from 'react';
-import '../../Scss/DestinationForm.scss'; 
-import { SERVER_IP } from '../../Api/apiClient';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import '../../Scss/DestinationForm.scss';
+import { BASE_URL } from '../../Api/apiSlice';
 
-const DestinationForm = ({ 
-    formData, 
-    setFormData, 
-    categories, 
-    handleSubmit, 
-    loading, 
-    onCancel 
+const DestinationForm = ({
+    formData,
+    setFormData,
+    categories,
+    handleSubmit,
+    loading,
+    onCancel
 }) => {
+
+    const { register, handleSubmit: rhfSubmit, setValue } = useForm({
+        defaultValues: {
+            name: formData.name || '',
+            category: formData.category || '',
+            description: formData.description || ''
+        }
+    });
+
+    const [previewUrl, setPreviewUrl] = useState(null);
+
+    useEffect(() => {
+        setValue('name', formData.name || '');
+        setValue('category', formData.category || '');
+        setValue('description', formData.description || '');
+    }, [formData, setValue]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (formData.previewUrl && formData.previewUrl.startsWith('blob:')) {
-            URL.revokeObjectURL(formData.previewUrl);
+        if (previewUrl && previewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(previewUrl);
         }
 
-        setFormData({ 
-            ...formData, 
-            imageFile: file, 
-            previewUrl: URL.createObjectURL(file) 
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+
+        setFormData({
+            ...formData,
+            imageFile: file,
+            previewUrl: url
         });
     };
 
     const getImageSource = () => {
-        if (formData.previewUrl) return formData.previewUrl;
+        if (previewUrl) return previewUrl;
+
         if (formData.picUrl) {
             if (formData.picUrl.startsWith('http')) return formData.picUrl;
-            const path = formData.picUrl.startsWith('/') ? formData.picUrl : `/${formData.picUrl}`;
-            return `http://${SERVER_IP}${path}`;
+
+            const serverHost = BASE_URL.replace('/api', '');
+            const path = formData.picUrl.startsWith('/')
+                ? formData.picUrl
+                : `/${formData.picUrl}`;
+
+            return `${serverHost}${path}`;
         }
+
         return null;
     };
 
@@ -40,38 +67,46 @@ const DestinationForm = ({
 
     return (
         <div className="inline-map-controls-form">
-            <form onSubmit={handleSubmit} className="controls-form-row">
+
+            <form
+                className="controls-form-row"
+                onSubmit={rhfSubmit((data) => {
+                    handleSubmit({
+                        ...formData,
+                        ...data
+                    });
+                })}
+            >
                 <div className="form-info-segment">
                     <span className="form-title">
                         {formData.id ? '✏️ Edit Landmark' : '📍 New Landmark'}
                     </span>
                 </div>
-                
+
                 <div className="form-inputs-segment">
-                    <input 
+
+                    <input
                         type="text"
                         placeholder="Point Name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                        required 
+                        {...register('name', { required: true })}
                         className="form-input"
                     />
-                    
-                    <select 
-                        value={formData.category} 
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+
+                    <select
+                        {...register('category')}
                         className="form-select"
                     >
                         {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
+                            <option key={cat} value={cat}>
+                                {cat.replace('_', ' ')}
+                            </option>
                         ))}
                     </select>
 
-                    <input 
+                    <input
                         type="text"
                         placeholder="Description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
+                        {...register('description')}
                         className="form-input"
                     />
 
@@ -80,40 +115,40 @@ const DestinationForm = ({
                             <span>📁</span>
                             <span>{imageSrc ? 'Change Image' : 'Upload Image'}</span>
                         </label>
-                        <input 
+
+                        <input
                             id="sidebar-file-input"
                             type="file"
-                            accept="image/*" 
-                            onChange={handleFileChange} 
-                            style={{ display: 'none' }} 
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            style={{ display: 'none' }}
                         />
 
                         {imageSrc && (
-                            <img 
-                                src={imageSrc} 
-                                alt="Preview" 
-                                className="image-preview-thumb" 
+                            <img
+                                src={imageSrc}
+                                alt="Preview"
+                                className="image-preview-thumb"
                             />
                         )}
                     </div>
+
                 </div>
 
                 <div className="button-group-row">
-                    <button 
-                        type="submit" 
-                        className="save-btn" 
-                        disabled={loading}
-                    >
+                    <button type="submit" className="save-btn" disabled={loading}>
                         {loading ? '...' : 'Save'}
                     </button>
-                    <button 
-                        type="button" 
-                        className="cancel-btn" 
+
+                    <button
+                        type="button"
+                        className="cancel-btn"
                         onClick={onCancel}
                     >
                         Cancel
                     </button>
                 </div>
+
             </form>
         </div>
     );
